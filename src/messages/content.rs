@@ -209,6 +209,8 @@ impl Content {
 pub enum ContentBlock {
     /// The text content block.
     Text(TextContentBlock),
+    /// The thinking content block.
+    Thinking(ThinkingContentBlock),
     /// The image content block.
     Image(ImageContentBlock),
     /// The tool use content block.
@@ -257,6 +259,7 @@ impl_enum_struct_serialization!(
     ContentBlock,
     type,
     Text(TextContentBlock, "text"),
+    Thinking(ThinkingContentBlock, "thinking"),
     Image(ImageContentBlock, "image"),
     ToolUse(ToolUseContentBlock, "tool_use"),
     ToolResult(ToolResultContentBlock, "tool_result")
@@ -310,6 +313,56 @@ impl TextContentBlock {
     }
 }
 
+// The text content block.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ThinkingContentBlock {
+    /// The content type. It is always `thinking`.
+    #[serde(rename = "type")]
+    pub _type: ContentType,
+    /// The text content.
+    pub thinking: String,
+    /// The text content.
+    pub signature: String,
+}
+
+impl Default for ThinkingContentBlock {
+    fn default() -> Self {
+        Self {
+            _type: ContentType::Thinking,
+            thinking: String::new(),
+            signature: String::new(),
+        }
+    }
+}
+
+impl_display_for_serialize!(ThinkingContentBlock);
+
+impl From<String> for ThinkingContentBlock {
+    fn from(thinking: String) -> Self {
+        Self::new(thinking, "".to_string())
+    }
+}
+
+impl From<&str> for ThinkingContentBlock {
+    fn from(thinking: &str) -> Self {
+        Self::new(thinking, "")
+    }
+}
+
+impl ThinkingContentBlock {
+    /// Creates a new thinking content block.
+    pub fn new<S>(thinking: S, signature: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            _type: ContentType::Thinking,
+            thinking: thinking.into(),
+            signature: signature.into(),
+        }
+    }
+}
+
 /// The image content block.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ImageContentBlock {
@@ -352,10 +405,16 @@ impl ImageContentBlock {
 pub enum ContentType {
     /// text
     Text,
+    /// thinking
+    Thinking,
     /// image
     Image,
     /// text_delta
     TextDelta,
+    /// thinking delta
+    ThinkingDelta,
+    /// signature delta
+    SignatureDelta,
     /// tool_use
     ToolUse,
     /// tool_result
@@ -394,6 +453,15 @@ impl Display for ContentType {
             | ContentType::InputJsonDelta => {
                   write!(f, "input_json_delta")
             },
+            | ContentType::Thinking => {
+                write!(f, "thinking")
+            },
+            | ContentType::ThinkingDelta => {
+                write!(f, "thinking_delta")
+            },
+            | ContentType::SignatureDelta => {
+                write!(f, "signature_delta")
+            }
         }
     }
 }
@@ -405,7 +473,10 @@ impl_enum_string_serialization!(
     TextDelta => "text_delta",
     ToolUse => "tool_use",
     ToolResult => "tool_result",
-    InputJsonDelta => "input_json_delta"
+    InputJsonDelta => "input_json_delta",
+    Thinking => "thinking",
+    ThinkingDelta => "thinking_delta",
+    SignatureDelta => "signature_delta"
 );
 
 /// The image content source.

@@ -61,7 +61,7 @@ impl ClaudeModel {
             | ClaudeModel::Claude3Sonnet20240229 => 4096,
             | ClaudeModel::Claude3Haiku20240307 => 4096,
             | ClaudeModel::Claude35Sonnet20240620 => 4096,
-            | ClaudeModel::Claude37Sonnet20250219 => 4096,
+            | ClaudeModel::Claude37Sonnet20250219 => 64000,
         }
     }
 }

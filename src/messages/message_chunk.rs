@@ -7,7 +7,7 @@ use crate::macros::{
 };
 use crate::messages::{
     ContentType, MessageChunkTypeError, MessagesResponseBody, StopReason,
-    StopSequence, StreamError, TextContentBlock,
+    StopSequence, StreamError, TextContentBlock, ThinkingContentBlock,
 };
 
 use super::ToolUseContentBlock;
@@ -336,6 +336,7 @@ impl Default for ContentBlockStartChunk {
 #[serde(untagged)]
 pub enum ContentBlockStart {
     TextContentBlock(TextContentBlock),
+    ThinkingContentBlock(ThinkingContentBlock),
     ToolUseContentBlock(ToolUseContentBlock),
 }
 impl Default for ContentBlockStart {
@@ -415,7 +416,9 @@ impl_display_for_serialize!(ContentBlockDeltaChunk);
 #[serde(untagged)]
 pub enum ContentBlockDelta  {
     TextDeltaContentBlock(TextDeltaContentBlock),
-    InputJsonDeltaBlock(InputJsonDeltaBlock)
+    ThinkingDeltaContentBlock(ThinkingDeltaContentBlock),
+    InputJsonDeltaBlock(InputJsonDeltaBlock),
+    SignatureDeltaContentBlock(SignatureDeltaContentBlock),
 }
 
 impl Default for ContentBlockDelta {
@@ -583,6 +586,99 @@ impl TextDeltaContentBlock {
         Self {
             _type: ContentType::TextDelta,
             text: text.into(),
+        }
+    }
+}
+
+
+/// The signature delta content block.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct SignatureDeltaContentBlock {
+    /// The content type. It is always `text_delta`.
+    #[serde(rename = "type")]
+    pub _type: ContentType,
+    /// The text delta content.
+    pub signature: String,
+}
+
+impl Default for SignatureDeltaContentBlock {
+    fn default() -> Self {
+        Self {
+            _type: ContentType::SignatureDelta,
+            signature: String::new(),
+        }
+    }
+}
+
+impl_display_for_serialize!(SignatureDeltaContentBlock);
+
+impl From<String> for SignatureDeltaContentBlock {
+    fn from(text: String) -> Self {
+        Self::new(text)
+    }
+}
+
+impl From<&str> for SignatureDeltaContentBlock {
+    fn from(text: &str) -> Self {
+        Self::new(text)
+    }
+}
+
+impl SignatureDeltaContentBlock {
+    /// Creates a new signature delta content block.
+    pub(crate) fn new<S>(signature: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            _type: ContentType::SignatureDelta,
+            signature: signature.into(),
+        }
+    }
+}
+
+/// The text delta content block.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ThinkingDeltaContentBlock {
+    /// The content type. It is always `text_delta`.
+    #[serde(rename = "type")]
+    pub _type: ContentType,
+    /// The text delta content.
+    pub thinking: String,
+}
+
+impl Default for ThinkingDeltaContentBlock {
+    fn default() -> Self {
+        Self {
+            _type: ContentType::ThinkingDelta,
+            thinking: String::new(),
+        }
+    }
+}
+
+impl_display_for_serialize!(ThinkingDeltaContentBlock);
+
+impl From<String> for ThinkingDeltaContentBlock {
+    fn from(text: String) -> Self {
+        Self::new(text)
+    }
+}
+
+impl From<&str> for ThinkingDeltaContentBlock {
+    fn from(text: &str) -> Self {
+        Self::new(text)
+    }
+}
+
+impl ThinkingDeltaContentBlock {
+    /// Creates a new thinking delta content block.
+    pub(crate) fn new<S>(text: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            _type: ContentType::TextDelta,
+            thinking: text.into(),
         }
     }
 }
