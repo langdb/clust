@@ -82,9 +82,22 @@ pub struct MessagesRequestBody {
     /// Recommended for advanced use cases only. You usually only need to use temperature.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub top_k: Option<TopK>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thinking: Option<Thinking>,
 }
 
 impl_display_for_serialize!(MessagesRequestBody);
+
+#[derive(
+    Debug, Clone, PartialEq, Default, serde::Serialize, serde::Deserialize,
+)]
+pub struct Thinking {
+    pub r#type: String,
+    pub budget_tokens: u64
+}
+
+impl_display_for_serialize!(Thinking);
 
 /// A builder for the `MessagesRequestBody`.
 ///
@@ -92,16 +105,19 @@ impl_display_for_serialize!(MessagesRequestBody);
 /// ```
 /// use clust::messages::{MessagesRequestBuilder, ClaudeModel, Message, SystemPrompt, MaxTokens, Metadata, StopSequence, StreamOption, Temperature, TopP, TopK};
 ///
-/// let request_body = MessagesRequestBuilder::new(ClaudeModel::Claude3Sonnet20240229)
+/// let thinking = Thinking { r#type: "enabled".into(), budget_tokens: 1024 };
+/// 
+/// let request_body = MessagesRequestBuilder::new(ClaudeModel::Claude37Sonnet20250219)
 ///     .messages(vec![Message::user("Hello, Claude!")])
 ///     .system(SystemPrompt::new("system-prompt"))
-///     .max_tokens(MaxTokens::new(1024, ClaudeModel::Claude3Sonnet20240229).unwrap())
+///     .max_tokens(MaxTokens::new(1024, ClaudeModel::Claude37Sonnet20250219).unwrap())
 ///     .metadata(Metadata { user_id: "metadata".into() })
 ///     .stop_sequences(vec![StopSequence::new("stop-sequence")])
 ///     .stream(StreamOption::ReturnOnce)
 ///     .temperature(Temperature::new(0.5).unwrap())
 ///     .top_p(TopP::new(0.5).unwrap())
 ///     .top_k(TopK::new(50))
+///     .thinking(thinking)
 ///     .build();
 ///
 /// let request_body = MessagesRequestBuilder::new_with_max_tokens(ClaudeModel::Claude3Sonnet20240229, 1024).unwrap()
@@ -244,6 +260,14 @@ impl MessagesRequestBuilder {
         self
     }
 
+    pub fn thinking(
+        mut self,
+        thinking: Thinking,
+    ) -> Self {
+        self.request_body.thinking = Some(thinking);
+        self
+    }
+    
     /// Builds the MessagesRequestBody.
     pub fn build(self) -> MessagesRequestBody {
         self.request_body
