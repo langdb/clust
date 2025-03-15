@@ -27,7 +27,7 @@ full = ["macros"]
 
 [dependencies]
 bytes = "1"
-reqwest = { version = "0.12.*", features = ["json", "stream"] }
+reqwest = { version = "0.12.*", features = ["json", "stream", "rustls-tls"], default-features = false }
 serde = { version = "1.0.*", features = ["derive"] }
 serde-json-fmt = "0.1.*"
 serde_json = "1.0.*"
