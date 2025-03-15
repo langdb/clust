@@ -1,5 +1,5 @@
 [package]
-name = "clust"
+name = "langdb_clust"
 version = "0.9.1"
 edition = "2021"
 authors = ["Mochineko <t.o.e.4315@gmail.com>"]
