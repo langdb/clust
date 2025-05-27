@@ -23,6 +23,8 @@ pub enum ClaudeModel {
     Claude37Sonnet20250219,
     // Claude 4.0 Opus
     Claude4Opus20250514,
+    // Claude 4.0 Sonnet
+    Claude4Sonnet20250514,
 }
 
 impl Default for ClaudeModel {
@@ -55,6 +57,9 @@ impl Display for ClaudeModel {
             | ClaudeModel::Claude4Opus20250514 => {
                 write!(f, "claude-opus-4-20250514")
             },
+            | ClaudeModel::Claude4Sonnet20250514 => {
+                write!(f, "claude-sonnet-4-20250514")
+            },
         }
     }
 }
@@ -68,6 +73,7 @@ impl ClaudeModel {
             | ClaudeModel::Claude35Sonnet20240620 => 4096,
             | ClaudeModel::Claude37Sonnet20250219 => 64000,
             | ClaudeModel::Claude4Opus20250514 => 32000,
+            | ClaudeModel::Claude4Sonnet20250514 => 64000,
         }
     }
 }
@@ -79,7 +85,8 @@ impl_enum_string_serialization!(
     Claude3Haiku20240307 => "claude-3-haiku-20240307",
     Claude35Sonnet20240620 => "claude-3-5-sonnet-20240620",
     Claude37Sonnet20250219 => "claude-3-7-sonnet-20250219",
-    Claude4Opus20250514 => "claude-opus-4-20250514"
+    Claude4Opus20250514 => "claude-opus-4-20250514",
+    Claude4Sonnet20250514 => "claude-sonnet-4-20250514"
 );
 
 #[cfg(test)]
