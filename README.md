@@ -242,6 +242,48 @@ let request_body = MessagesRequestBuilder::new_with_max_tokens(
 .build();
 ```
 
+### Prompt Caching
+
+You can enable prompt caching to improve response times and reduce costs for repeated requests. When enabled, the API will cache the prompt and return a cached response if the same prompt is sent again.
+
+```rust,no_run
+use clust::messages::MessagesRequestBody;
+use clust::messages::ClaudeModel;
+use clust::messages::Message;
+use clust::messages::MaxTokens;
+use clust::messages::SystemPrompt;
+
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    messages: vec![Message::user("What is the capital of France?")],
+    max_tokens: MaxTokens::new(1024, ClaudeModel::Claude3Sonnet20240229).unwrap(),
+    system: Some(SystemPrompt::new("You are a helpful assistant.")),
+    prompt_cache: Some(true), // Enable prompt caching
+    ..Default::default()
+};
+```
+
+You can also use the builder pattern to enable prompt caching:
+
+```rust,no_run
+use clust::messages::MessagesRequestBuilder;
+use clust::messages::ClaudeModel;
+use clust::messages::Message;
+use clust::messages::SystemPrompt;
+
+let request_body = MessagesRequestBuilder::new_with_max_tokens(
+    ClaudeModel::Claude3Sonnet20240229,
+    1024,
+).unwrap()
+.messages(vec![Message::user("What is the capital of France?")])
+.system(SystemPrompt::new("You are a helpful assistant."))
+.prompt_cache(true) // Enable prompt caching using builder
+.build();
+```
+
+See [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) for more details.
+```
+
 ### API calling
 
 Call the API by `clust::Client::create_a_message` with the request body.

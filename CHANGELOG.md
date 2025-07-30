@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support `Future` for `clust::messages::AsyncTool` by `clust::attributes::clust_tool`.
 - Support enum for argument of `clust::attributes::clust_tool`.
+- Add prompt caching support via `prompt_cache` field in `MessagesRequestBody` and `prompt_cache()` method in `MessagesRequestBuilder`.
 
 ## [0.9.0] - 2024-06-30
 

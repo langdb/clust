@@ -85,6 +85,14 @@ pub struct MessagesRequestBody {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thinking: Option<Thinking>,
+    /// Whether to use prompt caching.
+    ///
+    /// When enabled, the API will cache the prompt and return a cached response if the same prompt is sent again.
+    /// This can improve response times and reduce costs for repeated requests.
+    ///
+    /// See [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) for more details.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_cache: Option<bool>,
 }
 
 impl_display_for_serialize!(MessagesRequestBody);
@@ -267,6 +275,20 @@ impl MessagesRequestBuilder {
         self.request_body.thinking = Some(thinking);
         self
     }
+
+    /// Sets the prompt cache option.
+    ///
+    /// When enabled, the API will cache the prompt and return a cached response if the same prompt is sent again.
+    /// This can improve response times and reduce costs for repeated requests.
+    ///
+    /// See [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) for more details.
+    pub fn prompt_cache(
+        mut self,
+        prompt_cache: bool,
+    ) -> Self {
+        self.request_body.prompt_cache = Some(prompt_cache);
+        self
+    }
     
     /// Builds the MessagesRequestBody.
     pub fn build(self) -> MessagesRequestBody {
@@ -306,6 +328,7 @@ mod tests {
         assert_eq!(messages_request_body.temperature, None);
         assert_eq!(messages_request_body.top_p, None);
         assert_eq!(messages_request_body.top_k, None);
+        assert_eq!(messages_request_body.prompt_cache, None);
     }
 
     #[test]
@@ -331,6 +354,7 @@ mod tests {
         assert_eq!(messages_request_body.tools, None);
         assert_eq!(messages_request_body.top_p, None);
         assert_eq!(messages_request_body.top_k, None);
+        assert_eq!(messages_request_body.prompt_cache, None);
     }
 
     #[test]
@@ -367,6 +391,8 @@ mod tests {
             tools: None,
             top_p: Some(TopP::new(0.5).unwrap()),
             top_k: Some(TopK::new(50)),
+            thinking: None,
+            prompt_cache: None,
         };
         assert_eq!(
             serde_json::to_string(&messages_request_body).unwrap(),
@@ -399,6 +425,8 @@ mod tests {
             tools: None,
             top_p: Some(TopP::new(0.5).unwrap()),
             top_k: Some(TopK::new(50)),
+            thinking: None,
+            prompt_cache: None,
         };
         assert_eq!(
             serde_json::from_str::<MessagesRequestBody>("{\"model\":\"claude-3-sonnet-20240229\",\"messages\":[],\"system\":\"system-prompt\",\"max_tokens\":16,\"metadata\":{\"user_id\":\"metadata\"},\"stop_sequences\":[\"stop-sequence\"],\"stream\":false,\"temperature\":0.5,\"top_p\":0.5,\"top_k\":50}").unwrap(),
@@ -431,6 +459,7 @@ mod tests {
                 }])
                 .top_p(TopP::new(0.5).unwrap())
                 .top_k(TopK::new(50))
+                .prompt_cache(true)
                 .build();
 
         assert_eq!(
@@ -481,6 +510,10 @@ mod tests {
         assert_eq!(
             messages_request_body.top_k,
             Some(TopK::new(50))
+        );
+        assert_eq!(
+            messages_request_body.prompt_cache,
+            Some(true)
         );
     }
 
