@@ -242,44 +242,51 @@ let request_body = MessagesRequestBuilder::new_with_max_tokens(
 .build();
 ```
 
-### Prompt Caching
+### Advanced System Prompts with Cache Control
 
-You can enable prompt caching to improve response times and reduce costs for repeated requests. When enabled, the API will cache the prompt and return a cached response if the same prompt is sent again.
+You can create advanced system prompts with granular cache control for individual content blocks. This allows you to cache specific parts of your system prompt while keeping others dynamic.
 
 ```rust,no_run
-use clust::messages::MessagesRequestBody;
-use clust::messages::ClaudeModel;
-use clust::messages::Message;
-use clust::messages::MaxTokens;
-use clust::messages::SystemPrompt;
+use clust::messages::{MessagesRequestBody, ClaudeModel, Message, MaxTokens, SystemPrompt, CacheControl};
+
+// Create an advanced system prompt with cache control
+let system_prompt = SystemPrompt::from_text_blocks_with_cache_control(vec![
+    (
+        "You are an AI assistant tasked with analyzing literary works. Your goal is to provide insightful commentary on themes, characters, and writing style.\n",
+        None, // No cache control for the instruction
+    ),
+    (
+        "<the entire contents of Pride and Prejudice>",
+        Some(CacheControl::default()), // Cache this content with ephemeral cache control
+    ),
+]);
 
 let request_body = MessagesRequestBody {
     model: ClaudeModel::Claude3Sonnet20240229,
-    messages: vec![Message::user("What is the capital of France?")],
+    messages: vec![Message::user("Analyze the major themes in Pride and Prejudice.")],
     max_tokens: MaxTokens::new(1024, ClaudeModel::Claude3Sonnet20240229).unwrap(),
-    system: Some(SystemPrompt::new("You are a helpful assistant.")),
-    prompt_cache: Some(true), // Enable prompt caching
+    system: Some(system_prompt),
     ..Default::default()
 };
 ```
 
-You can also use the builder pattern to enable prompt caching:
+You can also create content blocks directly with cache control:
 
 ```rust,no_run
-use clust::messages::MessagesRequestBuilder;
-use clust::messages::ClaudeModel;
-use clust::messages::Message;
-use clust::messages::SystemPrompt;
+use clust::messages::{ContentBlock, TextContentBlock, CacheControl, SystemPrompt};
 
-let request_body = MessagesRequestBuilder::new_with_max_tokens(
-    ClaudeModel::Claude3Sonnet20240229,
-    1024,
-).unwrap()
-.messages(vec![Message::user("What is the capital of France?")])
-.system(SystemPrompt::new("You are a helpful assistant."))
-.prompt_cache(true) // Enable prompt caching using builder
-.build();
+let system_prompt = SystemPrompt::from_content_blocks(vec![
+    ContentBlock::Text(TextContentBlock::new(
+        "You are an AI assistant tasked with analyzing literary works."
+    )),
+    ContentBlock::Text(TextContentBlock::new_with_cache_control(
+        "<the entire contents of Pride and Prejudice>",
+        CacheControl::default(),
+    )),
+]);
 ```
+
+This approach allows for fine-grained control over what gets cached, improving performance and reducing costs for repeated requests with the same content.
 
 See [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) for more details.
 ```

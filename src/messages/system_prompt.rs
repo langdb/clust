@@ -1,111 +1,7 @@
 use std::fmt::Display;
 
 use crate::macros::impl_display_for_serialize;
-use crate::messages::{ContentBlock, TextContentBlock};
-
-/// Cache control for system prompt content blocks.
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct CacheControl {
-    /// The type of cache control.
-    #[serde(rename = "type")]
-    pub _type: CacheControlType,
-}
-
-impl Default for CacheControl {
-    fn default() -> Self {
-        Self {
-            _type: CacheControlType::Ephemeral,
-        }
-    }
-}
-
-/// The type of cache control.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CacheControlType {
-    /// ephemeral - The content will be cached temporarily
-    Ephemeral,
-}
-
-impl Default for CacheControlType {
-    fn default() -> Self {
-        Self::Ephemeral
-    }
-}
-
-impl Display for CacheControlType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            CacheControlType::Ephemeral => write!(f, "ephemeral"),
-        }
-    }
-}
-
-impl serde::Serialize for CacheControlType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for CacheControlType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        match s.as_str() {
-            "ephemeral" => Ok(CacheControlType::Ephemeral),
-            _ => Err(serde::de::Error::custom(format!("unknown cache control type: {}", s))),
-        }
-    }
-}
-
-/// System prompt content block with cache control.
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct SystemPromptContentBlock {
-    /// The content block.
-    #[serde(flatten)]
-    pub content: ContentBlock,
-    /// Optional cache control for this content block.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cache_control: Option<CacheControl>,
-}
-
-impl SystemPromptContentBlock {
-    /// Creates a new system prompt content block from a text content block.
-    pub fn text(text: &str) -> Self {
-        Self {
-            content: ContentBlock::Text(TextContentBlock::new(text)),
-            cache_control: None,
-        }
-    }
-
-    /// Creates a new system prompt content block from a text content block with cache control.
-    pub fn text_with_cache_control(text: &str, cache_control: CacheControl) -> Self {
-        Self {
-            content: ContentBlock::Text(TextContentBlock::new(text)),
-            cache_control: Some(cache_control),
-        }
-    }
-
-    /// Creates a new system prompt content block from any content block.
-    pub fn from_content_block(content: ContentBlock) -> Self {
-        Self {
-            content,
-            cache_control: None,
-        }
-    }
-
-    /// Creates a new system prompt content block from any content block with cache control.
-    pub fn from_content_block_with_cache_control(content: ContentBlock, cache_control: CacheControl) -> Self {
-        Self {
-            content,
-            cache_control: Some(cache_control),
-        }
-    }
-}
+use crate::messages::{CacheControl, ContentBlock, TextContentBlock};
 
 /// System prompt.
 ///
@@ -118,7 +14,7 @@ pub enum SystemPrompt {
     /// Simple string system prompt (legacy format).
     Simple(String),
     /// Advanced system prompt with content blocks and cache control.
-    Advanced(Vec<SystemPromptContentBlock>),
+    Advanced(Vec<ContentBlock>),
 }
 
 impl Default for SystemPrompt {
@@ -136,7 +32,7 @@ impl Display for SystemPrompt {
                     if i > 0 {
                         write!(f, "\n")?;
                     }
-                    write!(f, "{}", block.content)?;
+                    write!(f, "{}", block)?;
                 }
                 Ok(())
             }
@@ -156,8 +52,8 @@ impl From<&str> for SystemPrompt {
     }
 }
 
-impl From<Vec<SystemPromptContentBlock>> for SystemPrompt {
-    fn from(blocks: Vec<SystemPromptContentBlock>) -> Self {
+impl From<Vec<ContentBlock>> for SystemPrompt {
+    fn from(blocks: Vec<ContentBlock>) -> Self {
         Self::Advanced(blocks)
     }
 }
@@ -172,15 +68,15 @@ impl SystemPrompt {
     }
 
     /// Creates a new advanced system prompt with content blocks.
-    pub fn from_content_blocks(blocks: Vec<SystemPromptContentBlock>) -> Self {
+    pub fn from_content_blocks(blocks: Vec<ContentBlock>) -> Self {
         Self::Advanced(blocks)
     }
 
     /// Creates a new advanced system prompt from text blocks.
     pub fn from_text_blocks(texts: Vec<&str>) -> Self {
-        let blocks: Vec<SystemPromptContentBlock> = texts
+        let blocks: Vec<ContentBlock> = texts
             .iter()
-            .map(|text| SystemPromptContentBlock::text(text))
+            .map(|text| ContentBlock::Text(TextContentBlock::new(text)))
             .collect();
         Self::Advanced(blocks)
     }
@@ -189,13 +85,13 @@ impl SystemPrompt {
     pub fn from_text_blocks_with_cache_control(
         texts_with_cache: Vec<(&str, Option<CacheControl>)>,
     ) -> Self {
-        let blocks: Vec<SystemPromptContentBlock> = texts_with_cache
+        let blocks: Vec<ContentBlock> = texts_with_cache
             .iter()
             .map(|(text, cache_control)| {
                 if let Some(cache_control) = cache_control {
-                    SystemPromptContentBlock::text_with_cache_control(text, cache_control.clone())
+                    ContentBlock::Text(TextContentBlock::new_with_cache_control(text, cache_control.clone()))
                 } else {
-                    SystemPromptContentBlock::text(text)
+                    ContentBlock::Text(TextContentBlock::new(text))
                 }
             })
             .collect();
@@ -211,47 +107,7 @@ impl serde::Serialize for SystemPrompt {
     {
         match self {
             SystemPrompt::Simple(text) => text.serialize(serializer),
-            SystemPrompt::Advanced(blocks) => {
-                let mut block_map = serde_json::Map::new();
-                for (i, block) in blocks.iter().enumerate() {
-                    let mut block_value = serde_json::to_value(&block.content)
-                        .map_err(serde::ser::Error::custom)?;
-                    
-                    if let Some(ref cache_control) = block.cache_control {
-                        if let serde_json::Value::Object(ref mut obj) = block_value {
-                            obj.insert(
-                                "cache_control".to_string(),
-                                serde_json::to_value(cache_control)
-                                    .map_err(serde::ser::Error::custom)?,
-                            );
-                        }
-                    }
-                    
-                    block_map.insert(i.to_string(), block_value);
-                }
-                serde_json::Value::Array(
-                    blocks
-                        .iter()
-                        .map(|block| {
-                            let mut block_value = serde_json::to_value(&block.content)
-                                .map_err(serde::ser::Error::custom)?;
-                            
-                            if let Some(ref cache_control) = block.cache_control {
-                                if let serde_json::Value::Object(ref mut obj) = block_value {
-                                    obj.insert(
-                                        "cache_control".to_string(),
-                                        serde_json::to_value(cache_control)
-                                            .map_err(serde::ser::Error::custom)?,
-                                    );
-                                }
-                            }
-                            
-                            Ok(block_value)
-                        })
-                        .collect::<Result<Vec<_>, _>>()?,
-                )
-                .serialize(serializer)
-            }
+            SystemPrompt::Advanced(blocks) => blocks.serialize(serializer),
         }
     }
 }
@@ -266,36 +122,9 @@ impl<'de> serde::Deserialize<'de> for SystemPrompt {
         
         match value {
             serde_json::Value::String(text) => Ok(SystemPrompt::Simple(text)),
-            serde_json::Value::Array(array) => {
-                let blocks: Result<Vec<SystemPromptContentBlock>, _> = array
-                    .iter()
-                    .map(|item| {
-                        if let serde_json::Value::Object(obj) = item {
-                            let mut block_obj = obj.clone();
-                            let cache_control = block_obj.remove("cache_control")
-                                .map(|v| serde_json::from_value(v))
-                                .transpose()
-                                .map_err(serde::de::Error::custom)?;
-                            
-                            let content = serde_json::from_value(serde_json::Value::Object(block_obj))
-                                .map_err(serde::de::Error::custom)?;
-                            
-                            Ok(SystemPromptContentBlock {
-                                content,
-                                cache_control,
-                            })
-                        } else {
-                            let content = serde_json::from_value(item.clone())
-                                .map_err(serde::de::Error::custom)?;
-                            Ok(SystemPromptContentBlock {
-                                content,
-                                cache_control: None,
-                            })
-                        }
-                    })
-                    .collect();
-                
-                Ok(SystemPrompt::Advanced(blocks?))
+            serde_json::Value::Array(_) => {
+                let blocks = Vec::<ContentBlock>::deserialize(serde_json::to_value(value).map_err(serde::de::Error::custom)?.deserialize(serde_json::Value::deserialize(serde_json::to_value(value).map_err(serde::de::Error::custom)?).map_err(serde::de::Error::custom)?).map_err(serde::de::Error::custom)?;
+                Ok(SystemPrompt::Advanced(blocks))
             }
             _ => Err(serde::de::Error::custom("expected string or array")),
         }
@@ -329,8 +158,8 @@ mod tests {
     #[test]
     fn display_advanced() {
         let blocks = vec![
-            SystemPromptContentBlock::text("First block"),
-            SystemPromptContentBlock::text("Second block"),
+            ContentBlock::Text(TextContentBlock::new("First block")),
+            ContentBlock::Text(TextContentBlock::new("Second block")),
         ];
         let system_prompt = SystemPrompt::Advanced(blocks);
         assert_eq!(system_prompt.to_string(), "First block\nSecond block");
@@ -348,11 +177,11 @@ mod tests {
     #[test]
     fn serialize_advanced() {
         let blocks = vec![
-            SystemPromptContentBlock::text("First block"),
-            SystemPromptContentBlock::text_with_cache_control(
+            ContentBlock::Text(TextContentBlock::new("First block")),
+            ContentBlock::Text(TextContentBlock::new_with_cache_control(
                 "Second block",
                 CacheControl::default(),
-            ),
+            )),
         ];
         let system_prompt = SystemPrompt::Advanced(blocks);
         let serialized = serde_json::to_string(&system_prompt).unwrap();
@@ -380,8 +209,18 @@ mod tests {
         match system_prompt {
             SystemPrompt::Advanced(blocks) => {
                 assert_eq!(blocks.len(), 2);
-                assert_eq!(blocks[0].cache_control, None);
-                assert!(blocks[1].cache_control.is_some());
+                // First block should have no cache control
+                if let ContentBlock::Text(text_block) = &blocks[0] {
+                    assert_eq!(text_block.cache_control, None);
+                } else {
+                    panic!("Expected text block");
+                }
+                // Second block should have cache control
+                if let ContentBlock::Text(text_block) = &blocks[1] {
+                    assert!(text_block.cache_control.is_some());
+                } else {
+                    panic!("Expected text block");
+                }
             }
             _ => panic!("Expected advanced system prompt"),
         }
@@ -394,8 +233,12 @@ mod tests {
         match system_prompt {
             SystemPrompt::Advanced(blocks) => {
                 assert_eq!(blocks.len(), 2);
-                assert_eq!(blocks[0].cache_control, None);
-                assert_eq!(blocks[1].cache_control, None);
+                if let ContentBlock::Text(text_block) = &blocks[0] {
+                    assert_eq!(text_block.cache_control, None);
+                }
+                if let ContentBlock::Text(text_block) = &blocks[1] {
+                    assert_eq!(text_block.cache_control, None);
+                }
             }
             _ => panic!("Expected advanced system prompt"),
         }
@@ -411,26 +254,14 @@ mod tests {
         match system_prompt {
             SystemPrompt::Advanced(blocks) => {
                 assert_eq!(blocks.len(), 2);
-                assert_eq!(blocks[0].cache_control, None);
-                assert!(blocks[1].cache_control.is_some());
+                if let ContentBlock::Text(text_block) = &blocks[0] {
+                    assert_eq!(text_block.cache_control, None);
+                }
+                if let ContentBlock::Text(text_block) = &blocks[1] {
+                    assert!(text_block.cache_control.is_some());
+                }
             }
             _ => panic!("Expected advanced system prompt"),
         }
-    }
-
-    #[test]
-    fn cache_control_serialize() {
-        let cache_control = CacheControl::default();
-        assert_eq!(
-            serde_json::to_string(&cache_control).unwrap(),
-            "{\"type\":\"ephemeral\"}"
-        );
-    }
-
-    #[test]
-    fn cache_control_deserialize() {
-        let json = r#"{"type": "ephemeral"}"#;
-        let cache_control = serde_json::from_str::<CacheControl>(json).unwrap();
-        assert_eq!(cache_control._type, CacheControlType::Ephemeral);
     }
 }
