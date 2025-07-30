@@ -68,7 +68,7 @@ pub use role::Role;
 pub use stop_reason::StopReason;
 pub use stop_sequence::StopSequence;
 pub use stream_option::StreamOption;
-pub use system_prompt::SystemPrompt;
+pub use system_prompt::{CacheControl, CacheControlType, SystemPrompt, SystemPromptContentBlock};
 pub use temperature::Temperature;
 pub use tool::AsyncTool;
 pub use tool::Tool;
