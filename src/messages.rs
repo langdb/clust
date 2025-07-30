@@ -1,6 +1,7 @@
 //! The [Messages API](https://docs.anthropic.com/claude/reference/messages_post) implementations.
 
 mod chunk_stream;
+mod cache_control;
 mod claude_model;
 mod content;
 mod error;
@@ -23,6 +24,7 @@ mod usage;
 pub(crate) mod api;
 mod tool;
 
+pub use cache_control::{CacheControl, CacheControlType};
 pub use claude_model::ClaudeModel;
 pub use content::Content;
 pub use content::ContentBlock;

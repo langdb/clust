@@ -7,7 +7,7 @@ use crate::macros::{
     impl_enum_with_string_or_array_serialization,
 };
 use crate::messages::{
-    ContentFlatteningError, ImageMediaTypeParseError, ToolResult, ToolUse,
+    CacheControl, ContentFlatteningError, ImageMediaTypeParseError, ToolResult, ToolUse,
 };
 
 /// The content of the message.
@@ -275,6 +275,9 @@ pub struct TextContentBlock {
     pub _type: ContentType,
     /// The text content.
     pub text: String,
+    /// Optional cache control for this content block.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_control: Option<CacheControl>,
 }
 
 impl Default for TextContentBlock {
@@ -309,6 +312,19 @@ impl TextContentBlock {
         Self {
             _type: ContentType::Text,
             text: text.into(),
+            cache_control: None,
+        }
+    }
+
+    /// Creates a new text content block with cache control.
+    pub fn new_with_cache_control<S>(text: S, cache_control: CacheControl) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            _type: ContentType::Text,
+            text: text.into(),
+            cache_control: Some(cache_control),
         }
     }
 }
