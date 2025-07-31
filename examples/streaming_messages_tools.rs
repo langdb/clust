@@ -9,6 +9,7 @@
 //! $ cargo run --example streaming_messages_tools
 //! ```
 
+use clust::Client;
 use clust::messages::ClaudeModel;
 use clust::messages::ContentBlockDelta;
 use clust::messages::MaxTokens;
@@ -18,7 +19,6 @@ use clust::messages::MessagesRequestBody;
 use clust::messages::StreamOption;
 use clust::messages::SystemPrompt;
 use clust::messages::ToolDefinition;
-use clust::Client;
 
 use clap::Parser;
 use futures_util::StreamExt;
@@ -37,9 +37,13 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::from_env()?;
     // 2. Create a request body with stream option.
     let model = ClaudeModel::Claude3Sonnet20240229;
-    let messages = vec![Message::user("how is the temperature like")];
+    let messages = vec![Message::user(
+        "how is the temperature like",
+    )];
     let max_tokens = MaxTokens::new(1024, model)?;
-    let system_prompt = SystemPrompt::new("use get_weather tool and tell me the current weather");
+    let system_prompt = SystemPrompt::new(
+        "use get_weather tool and tell me the current weather",
+    );
     let request_body = MessagesRequestBody {
         model,
         messages,
@@ -58,7 +62,9 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // 3. Call the API.
-    let mut stream = client.create_a_message_stream(request_body).await?;
+    let mut stream = client
+        .create_a_message_stream(request_body)
+        .await?;
 
     let mut buffer = String::new();
 
@@ -66,20 +72,22 @@ async fn main() -> anyhow::Result<()> {
     // NOTE: The `futures_util::StreamExt` run on the single thread.
     while let Some(chunk) = stream.next().await {
         match chunk {
-            Ok(chunk) => {
+            | Ok(chunk) => {
                 println!("Chunk:\n{}", chunk);
                 match chunk {
-                    MessageChunk::ContentBlockDelta(content_block_delta) => {
-                        if let ContentBlockDelta::TextDeltaContentBlock(delta) =  content_block_delta.delta {
+                    | MessageChunk::ContentBlockDelta(content_block_delta) => {
+                        if let ContentBlockDelta::TextDeltaContentBlock(delta) =
+                            content_block_delta.delta
+                        {
                             buffer.push_str(&delta.text);
                         }
-                    }
-                    _ => {}
+                    },
+                    | _ => {},
                 }
-            }
-            Err(error) => {
+            },
+            | Err(error) => {
                 eprintln!("Chunk error:\n{:?}", error);
-            }
+            },
         }
     }
 

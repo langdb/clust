@@ -4,8 +4,7 @@ use crate::macros::{
     impl_display_for_serialize, impl_enum_string_serialization,
 };
 use crate::messages::{
-    ClaudeModel, Content, Message, Role, StopReason,
-    StopSequence, Usage,
+    ClaudeModel, Content, Message, Role, StopReason, StopSequence, Usage,
 };
 
 /// The response body for the Messages API.
@@ -132,6 +131,9 @@ mod tests {
             usage: Usage {
                 input_tokens: 1,
                 output_tokens: 2,
+                cache_read_input_tokens: None,
+                cache_creation_input_tokens: None,
+                cache_creation: None,
             },
         };
         assert_eq!(
@@ -153,6 +155,9 @@ mod tests {
             usage: Usage {
                 input_tokens: 1,
                 output_tokens: 2,
+                cache_read_input_tokens: None,
+                cache_creation_input_tokens: None,
+                cache_creation: None,
             },
         };
         assert_eq!(
@@ -176,6 +181,9 @@ mod tests {
             usage: Usage {
                 input_tokens: 1,
                 output_tokens: 2,
+                cache_read_input_tokens: None,
+                cache_creation_input_tokens: None,
+                cache_creation: None,
             },
         };
         assert_eq!(
@@ -215,7 +223,7 @@ mod tests {
             MessageObjectType::Message
         );
     }
-    
+
     #[test]
     fn create_message() {
         let response = MessagesResponseBody {

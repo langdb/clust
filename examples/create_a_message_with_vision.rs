@@ -14,6 +14,7 @@ use std::path::PathBuf;
 use base64::Engine;
 use clap::Parser;
 
+use clust::Client;
 use clust::messages::ClaudeModel;
 use clust::messages::ContentBlock;
 use clust::messages::ImageContentSource;
@@ -22,7 +23,6 @@ use clust::messages::MaxTokens;
 use clust::messages::Message;
 use clust::messages::MessagesRequestBody;
 use clust::messages::SystemPrompt;
-use clust::Client;
 
 #[derive(Parser)]
 struct Arguments {

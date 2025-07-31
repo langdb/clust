@@ -23,6 +23,31 @@ pub struct Usage {
     pub input_tokens: u32,
     /// The number of output tokens which were used.
     pub output_tokens: u32,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_read_input_tokens: Option<u32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_creation_input_tokens: Option<u32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_creation: Option<CacheCreation>,
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub struct CacheCreation {
+    pub ephemeral_5m_input_tokens: u32,
+    pub ephemeral_1h_input_tokens: u32,
 }
 
 impl_display_for_serialize!(Usage);
@@ -36,6 +61,9 @@ mod tests {
         let usage = Usage {
             input_tokens: 1,
             output_tokens: 2,
+            cache_read_input_tokens: None,
+            cache_creation_input_tokens: None,
+            cache_creation: None,
         };
         assert_eq!(
             serde_json::to_string(&usage).unwrap(),
@@ -48,6 +76,9 @@ mod tests {
         let usage = Usage {
             input_tokens: 1,
             output_tokens: 2,
+            cache_read_input_tokens: None,
+            cache_creation_input_tokens: None,
+            cache_creation: None,
         };
         assert_eq!(
             serde_json::from_str::<Usage>(

@@ -1,9 +1,9 @@
+use crate::ValidationError;
 use crate::macros::impl_display_for_serialize;
 use crate::messages::{
     ClaudeModel, MaxTokens, Message, Metadata, StopSequence, StreamOption,
     SystemPrompt, Temperature, ToolDefinition, TopK, TopP,
 };
-use crate::ValidationError;
 
 /// The request body for the Messages API.
 ///
@@ -85,7 +85,6 @@ pub struct MessagesRequestBody {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thinking: Option<Thinking>,
-
 }
 
 impl_display_for_serialize!(MessagesRequestBody);
@@ -95,7 +94,7 @@ impl_display_for_serialize!(MessagesRequestBody);
 )]
 pub struct Thinking {
     pub r#type: String,
-    pub budget_tokens: u64
+    pub budget_tokens: u64,
 }
 
 impl_display_for_serialize!(Thinking);
@@ -107,7 +106,7 @@ impl_display_for_serialize!(Thinking);
 /// use clust::messages::{MessagesRequestBuilder, ClaudeModel, Message, SystemPrompt, MaxTokens, Metadata, StopSequence, StreamOption, Temperature, TopP, TopK};
 ///
 /// let thinking = Thinking { r#type: "enabled".into(), budget_tokens: 1024 };
-/// 
+///
 /// let request_body = MessagesRequestBuilder::new(ClaudeModel::Claude37Sonnet20250219)
 ///     .messages(vec![Message::user("Hello, Claude!")])
 ///     .system(SystemPrompt::new("system-prompt"))
@@ -269,8 +268,6 @@ impl MessagesRequestBuilder {
         self
     }
 
-
-    
     /// Builds the MessagesRequestBody.
     pub fn build(self) -> MessagesRequestBody {
         self.request_body

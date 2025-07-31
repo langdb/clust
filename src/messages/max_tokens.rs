@@ -1,5 +1,5 @@
-use crate::messages::ClaudeModel;
 use crate::ValidationError;
+use crate::messages::ClaudeModel;
 use std::fmt::Display;
 
 /// The maximum number of tokens.

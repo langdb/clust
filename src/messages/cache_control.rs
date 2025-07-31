@@ -34,15 +34,21 @@ impl Default for CacheControlType {
 }
 
 impl Display for CacheControlType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
-            CacheControlType::Ephemeral => write!(f, "ephemeral"),
+            | CacheControlType::Ephemeral => write!(f, "ephemeral"),
         }
     }
 }
 
 impl serde::Serialize for CacheControlType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
@@ -57,8 +63,11 @@ impl<'de> serde::Deserialize<'de> for CacheControlType {
     {
         let s = String::deserialize(deserializer)?;
         match s.as_str() {
-            "ephemeral" => Ok(CacheControlType::Ephemeral),
-            _ => Err(serde::de::Error::custom(format!("unknown cache control type: {}", s))),
+            | "ephemeral" => Ok(CacheControlType::Ephemeral),
+            | _ => Err(serde::de::Error::custom(format!(
+                "unknown cache control type: {}",
+                s
+            ))),
         }
     }
 }
@@ -82,12 +91,18 @@ mod tests {
     fn cache_control_deserialize() {
         let json = r#"{"type": "ephemeral"}"#;
         let cache_control = serde_json::from_str::<CacheControl>(json).unwrap();
-        assert_eq!(cache_control._type, CacheControlType::Ephemeral);
+        assert_eq!(
+            cache_control._type,
+            CacheControlType::Ephemeral
+        );
     }
 
     #[test]
     fn cache_control_type_display() {
-        assert_eq!(CacheControlType::Ephemeral.to_string(), "ephemeral");
+        assert_eq!(
+            CacheControlType::Ephemeral.to_string(),
+            "ephemeral"
+        );
     }
 
     #[test]

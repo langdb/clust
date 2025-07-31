@@ -117,9 +117,7 @@ pub struct ToolResult {
 
 impl_display_for_serialize!(ToolResult);
 
-#[derive(
-    Debug, Clone, PartialEq,  serde::Serialize, serde::Deserialize,
-)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(untagged)]
 pub enum ToolResultContent {
     Text(String),
@@ -436,7 +434,9 @@ mod tests {
     fn display_tool_result() {
         let tool_result = ToolResult {
             tool_use_id: "id".to_string(),
-            content: Some(ToolResultContent::Text("text".to_string())),
+            content: Some(ToolResultContent::Text(
+                "text".to_string(),
+            )),
             is_error: None,
         };
         assert_eq!(
@@ -446,7 +446,9 @@ mod tests {
 
         let tool_result = ToolResult {
             tool_use_id: "id".to_string(),
-            content: Some(ToolResultContent::Text("text".to_string())),
+            content: Some(ToolResultContent::Text(
+                "text".to_string(),
+            )),
             is_error: Some(true),
         };
         assert_eq!(
@@ -459,7 +461,9 @@ mod tests {
     fn serialize_tool_result() {
         let tool_result = ToolResult {
             tool_use_id: "id".to_string(),
-            content: Some(ToolResultContent::Text("text".to_string())),
+            content: Some(ToolResultContent::Text(
+                "text".to_string(),
+            )),
             is_error: None,
         };
         assert_eq!(
@@ -469,7 +473,9 @@ mod tests {
 
         let tool_result = ToolResult {
             tool_use_id: "id".to_string(),
-            content: Some(ToolResultContent::Text("text".to_string())),
+            content: Some(ToolResultContent::Text(
+                "text".to_string(),
+            )),
             is_error: Some(true),
         };
         assert_eq!(
@@ -482,7 +488,9 @@ mod tests {
     fn deserialize_tool_result() {
         let tool_result = ToolResult {
             tool_use_id: "id".to_string(),
-            content: Some(ToolResultContent::Text("text".to_string())),
+            content: Some(ToolResultContent::Text(
+                "text".to_string(),
+            )),
             is_error: None,
         };
         assert_eq!(
@@ -495,7 +503,9 @@ mod tests {
 
         let tool_result = ToolResult {
             tool_use_id: "id".to_string(),
-            content: Some(ToolResultContent::Text("text".to_string())),
+            content: Some(ToolResultContent::Text(
+                "text".to_string(),
+            )),
             is_error: Some(true),
         };
         assert_eq!(
@@ -511,12 +521,16 @@ mod tests {
     fn new_tool_result() {
         let tool_result = ToolResult::success(
             "id",
-            Some(ToolResultContent::Text("text".to_string())),
+            Some(ToolResultContent::Text(
+                "text".to_string(),
+            )),
         );
         assert_eq!(tool_result.tool_use_id, "id");
         assert_eq!(
             tool_result.content,
-            Some(ToolResultContent::Text("text".to_string())),
+            Some(ToolResultContent::Text(
+                "text".to_string()
+            )),
         );
         assert_eq!(tool_result.is_error, None);
 
@@ -527,12 +541,16 @@ mod tests {
 
         let tool_result = ToolResult::error(
             "id",
-             Some(ToolResultContent::Text("text".to_string())),
+            Some(ToolResultContent::Text(
+                "text".to_string(),
+            )),
         );
         assert_eq!(tool_result.tool_use_id, "id");
         assert_eq!(
             tool_result.content,
-            Some(ToolResultContent::Text("text".to_string())),
+            Some(ToolResultContent::Text(
+                "text".to_string()
+            )),
         );
         assert_eq!(tool_result.is_error, Some(true));
 
@@ -597,7 +615,8 @@ mod tests {
             tool_result
                 .content
                 .unwrap()
-                .as_text().unwrap(),
+                .as_text()
+                .unwrap(),
             "1"
         );
 

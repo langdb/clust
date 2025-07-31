@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use crate::macros::impl_display_for_serialize;
 use crate::messages::{CacheControl, ContentBlock, TextContentBlock};
 
 /// System prompt.
@@ -24,10 +23,13 @@ impl Default for SystemPrompt {
 }
 
 impl Display for SystemPrompt {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
         match self {
-            SystemPrompt::Simple(text) => write!(f, "{}", text),
-            SystemPrompt::Advanced(blocks) => {
+            | SystemPrompt::Simple(text) => write!(f, "{}", text),
+            | SystemPrompt::Advanced(blocks) => {
                 for (i, block) in blocks.iter().enumerate() {
                     if i > 0 {
                         write!(f, "\n")?;
@@ -35,7 +37,7 @@ impl Display for SystemPrompt {
                     write!(f, "{}", block)?;
                 }
                 Ok(())
-            }
+            },
         }
     }
 }
@@ -76,22 +78,29 @@ impl SystemPrompt {
     pub fn from_text_blocks(texts: Vec<&str>) -> Self {
         let blocks: Vec<ContentBlock> = texts
             .iter()
-            .map(|text| ContentBlock::Text(TextContentBlock::new(text)))
+            .map(|text| {
+                ContentBlock::Text(TextContentBlock::new(text.to_string()))
+            })
             .collect();
         Self::Advanced(blocks)
     }
 
     /// Creates a new advanced system prompt from text blocks with cache control.
     pub fn from_text_blocks_with_cache_control(
-        texts_with_cache: Vec<(&str, Option<CacheControl>)>,
+        texts_with_cache: Vec<(&str, Option<CacheControl>)>
     ) -> Self {
         let blocks: Vec<ContentBlock> = texts_with_cache
             .iter()
             .map(|(text, cache_control)| {
                 if let Some(cache_control) = cache_control {
-                    ContentBlock::Text(TextContentBlock::new_with_cache_control(text, cache_control.clone()))
+                    ContentBlock::Text(
+                        TextContentBlock::new_with_cache_control(
+                            text.to_string(),
+                            cache_control.clone(),
+                        ),
+                    )
                 } else {
-                    ContentBlock::Text(TextContentBlock::new(text))
+                    ContentBlock::Text(TextContentBlock::new(text.to_string()))
                 }
             })
             .collect();
@@ -101,13 +110,16 @@ impl SystemPrompt {
 
 // Custom serialization for SystemPrompt
 impl serde::Serialize for SystemPrompt {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
         match self {
-            SystemPrompt::Simple(text) => text.serialize(serializer),
-            SystemPrompt::Advanced(blocks) => blocks.serialize(serializer),
+            | SystemPrompt::Simple(text) => text.serialize(serializer),
+            | SystemPrompt::Advanced(blocks) => blocks.serialize(serializer),
         }
     }
 }
@@ -119,19 +131,23 @@ impl<'de> serde::Deserialize<'de> for SystemPrompt {
         D: serde::Deserializer<'de>,
     {
         let value = serde_json::Value::deserialize(deserializer)?;
-        
+
         match value {
-            serde_json::Value::String(text) => Ok(SystemPrompt::Simple(text)),
-            serde_json::Value::Array(_) => {
-                let blocks = Vec::<ContentBlock>::deserialize(serde_json::to_value(value).map_err(serde::de::Error::custom)?.deserialize(serde_json::Value::deserialize(serde_json::to_value(value).map_err(serde::de::Error::custom)?).map_err(serde::de::Error::custom)?).map_err(serde::de::Error::custom)?;
+            | serde_json::Value::String(text) => Ok(SystemPrompt::Simple(text)),
+            | serde_json::Value::Array(_) => {
+                let blocks = Vec::<ContentBlock>::deserialize(
+                    serde_json::to_value(value)
+                        .map_err(serde::de::Error::custom)?,
+                )
+                .map_err(serde::de::Error::custom)?;
                 Ok(SystemPrompt::Advanced(blocks))
-            }
-            _ => Err(serde::de::Error::custom("expected string or array")),
+            },
+            | _ => Err(serde::de::Error::custom(
+                "expected string or array",
+            )),
         }
     }
 }
-
-impl_display_for_serialize!(SystemPrompt);
 
 #[cfg(test)]
 mod tests {
@@ -141,18 +157,27 @@ mod tests {
     #[test]
     fn new() {
         let system_prompt = SystemPrompt::new("system-prompt");
-        assert_eq!(system_prompt, SystemPrompt::Simple("system-prompt".to_string()));
+        assert_eq!(
+            system_prompt,
+            SystemPrompt::Simple("system-prompt".to_string())
+        );
     }
 
     #[test]
     fn default() {
-        assert_eq!(SystemPrompt::default(), SystemPrompt::Simple("".to_string()));
+        assert_eq!(
+            SystemPrompt::default(),
+            SystemPrompt::Simple("".to_string())
+        );
     }
 
     #[test]
     fn display_simple() {
         let system_prompt = SystemPrompt::new("system-prompt");
-        assert_eq!(system_prompt.to_string(), "system-prompt");
+        assert_eq!(
+            system_prompt.to_string(),
+            "system-prompt"
+        );
     }
 
     #[test]
@@ -162,7 +187,10 @@ mod tests {
             ContentBlock::Text(TextContentBlock::new("Second block")),
         ];
         let system_prompt = SystemPrompt::Advanced(blocks);
-        assert_eq!(system_prompt.to_string(), "First block\nSecond block");
+        assert_eq!(
+            system_prompt.to_string(),
+            "First block\nSecond block"
+        );
     }
 
     #[test]
@@ -178,10 +206,12 @@ mod tests {
     fn serialize_advanced() {
         let blocks = vec![
             ContentBlock::Text(TextContentBlock::new("First block")),
-            ContentBlock::Text(TextContentBlock::new_with_cache_control(
-                "Second block",
-                CacheControl::default(),
-            )),
+            ContentBlock::Text(
+                TextContentBlock::new_with_cache_control(
+                    "Second block",
+                    CacheControl::default(),
+                ),
+            ),
         ];
         let system_prompt = SystemPrompt::Advanced(blocks);
         let serialized = serde_json::to_string(&system_prompt).unwrap();
@@ -207,7 +237,7 @@ mod tests {
         ]"#;
         let system_prompt = serde_json::from_str::<SystemPrompt>(json).unwrap();
         match system_prompt {
-            SystemPrompt::Advanced(blocks) => {
+            | SystemPrompt::Advanced(blocks) => {
                 assert_eq!(blocks.len(), 2);
                 // First block should have no cache control
                 if let ContentBlock::Text(text_block) = &blocks[0] {
@@ -217,21 +247,28 @@ mod tests {
                 }
                 // Second block should have cache control
                 if let ContentBlock::Text(text_block) = &blocks[1] {
-                    assert!(text_block.cache_control.is_some());
+                    assert!(
+                        text_block
+                            .cache_control
+                            .is_some()
+                    );
                 } else {
                     panic!("Expected text block");
                 }
-            }
-            _ => panic!("Expected advanced system prompt"),
+            },
+            | _ => panic!("Expected advanced system prompt"),
         }
     }
 
     #[test]
     fn from_text_blocks() {
-        let texts = vec!["First block", "Second block"];
+        let texts = vec![
+            "First block",
+            "Second block",
+        ];
         let system_prompt = SystemPrompt::from_text_blocks(texts);
         match system_prompt {
-            SystemPrompt::Advanced(blocks) => {
+            | SystemPrompt::Advanced(blocks) => {
                 assert_eq!(blocks.len(), 2);
                 if let ContentBlock::Text(text_block) = &blocks[0] {
                     assert_eq!(text_block.cache_control, None);
@@ -239,8 +276,8 @@ mod tests {
                 if let ContentBlock::Text(text_block) = &blocks[1] {
                     assert_eq!(text_block.cache_control, None);
                 }
-            }
-            _ => panic!("Expected advanced system prompt"),
+            },
+            | _ => panic!("Expected advanced system prompt"),
         }
     }
 
@@ -248,20 +285,28 @@ mod tests {
     fn from_text_blocks_with_cache_control() {
         let texts_with_cache = vec![
             ("First block", None),
-            ("Second block", Some(CacheControl::default())),
+            (
+                "Second block",
+                Some(CacheControl::default()),
+            ),
         ];
-        let system_prompt = SystemPrompt::from_text_blocks_with_cache_control(texts_with_cache);
+        let system_prompt =
+            SystemPrompt::from_text_blocks_with_cache_control(texts_with_cache);
         match system_prompt {
-            SystemPrompt::Advanced(blocks) => {
+            | SystemPrompt::Advanced(blocks) => {
                 assert_eq!(blocks.len(), 2);
                 if let ContentBlock::Text(text_block) = &blocks[0] {
                     assert_eq!(text_block.cache_control, None);
                 }
                 if let ContentBlock::Text(text_block) = &blocks[1] {
-                    assert!(text_block.cache_control.is_some());
+                    assert!(
+                        text_block
+                            .cache_control
+                            .is_some()
+                    );
                 }
-            }
-            _ => panic!("Expected advanced system prompt"),
+            },
+            | _ => panic!("Expected advanced system prompt"),
         }
     }
 }

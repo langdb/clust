@@ -41,7 +41,10 @@ mod tests {
     #[test]
     fn display() {
         let stop_sequence = StopSequence::new("stop-sequence");
-        assert_eq!(stop_sequence.to_string(), "stop-sequence");
+        assert_eq!(
+            stop_sequence.to_string(),
+            "stop-sequence"
+        );
     }
 
     #[test]
@@ -52,7 +55,7 @@ mod tests {
             "\"stop-sequence\""
         );
     }
-    
+
     #[test]
     fn deserialize() {
         let stop_sequence = StopSequence::new("stop-sequence");
@@ -62,4 +65,3 @@ mod tests {
         );
     }
 }
-

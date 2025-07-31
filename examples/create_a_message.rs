@@ -9,12 +9,12 @@
 //! $ cargo run --example create_a_message -- -p "You are a excellent AI assistant." -m "Where is the capital of Japan?"
 //! ```
 
+use clust::Client;
 use clust::messages::ClaudeModel;
 use clust::messages::MaxTokens;
 use clust::messages::Message;
 use clust::messages::MessagesRequestBody;
 use clust::messages::SystemPrompt;
-use clust::Client;
 
 use clap::Parser;
 

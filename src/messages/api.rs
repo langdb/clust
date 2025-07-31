@@ -1,11 +1,11 @@
+use crate::ApiError;
+use crate::Client;
+use crate::ClientError;
 use crate::messages::chunk_stream::ChunkStream;
 use crate::messages::{
     MessageChunk, MessagesError, MessagesRequestBody, MessagesResponseBody,
     StreamError, StreamOption,
 };
-use crate::ApiError;
-use crate::Client;
-use crate::ClientError;
 
 use futures_core::Stream;
 
