@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support `Future` for `clust::messages::AsyncTool` by `clust::attributes::clust_tool`.
 - Support enum for argument of `clust::attributes::clust_tool`.
+- Add advanced system prompt support with granular cache control via `cache_control` field in content blocks and `SystemPrompt::from_text_blocks_with_cache_control()` method.
 
 ## [0.9.0] - 2024-06-30
 

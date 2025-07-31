@@ -9,6 +9,7 @@
 //! $ cargo run --example streaming_messages -- -p "You are a excellent AI assistant." -m "Where is the capital of Japan?"
 //! ```
 
+use clust::Client;
 use clust::messages::ClaudeModel;
 use clust::messages::ContentBlockDelta;
 use clust::messages::MaxTokens;
@@ -17,7 +18,6 @@ use clust::messages::MessageChunk;
 use clust::messages::MessagesRequestBody;
 use clust::messages::StreamOption;
 use clust::messages::SystemPrompt;
-use clust::Client;
 
 use clap::Parser;
 use futures_util::StreamExt;
@@ -71,7 +71,9 @@ async fn main() -> anyhow::Result<()> {
                 println!("Chunk:\n{}", chunk);
                 match chunk {
                     | MessageChunk::ContentBlockDelta(content_block_delta) => {
-                        if let ContentBlockDelta::TextDeltaContentBlock(delta) =  content_block_delta.delta {
+                        if let ContentBlockDelta::TextDeltaContentBlock(delta) =
+                            content_block_delta.delta
+                        {
                             buffer.push_str(&delta.text);
                         }
                     },

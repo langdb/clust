@@ -6,12 +6,12 @@
 
 #![cfg(feature = "macros")]
 
+use clust::Client;
 use clust::messages::ClaudeModel;
 use clust::messages::MaxTokens;
 use clust::messages::Message;
 use clust::messages::MessagesRequestBody;
 use clust::messages::ToolList;
-use clust::Client;
 
 use clust_macros::clust_tool;
 

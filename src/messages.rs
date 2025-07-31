@@ -1,5 +1,6 @@
 //! The [Messages API](https://docs.anthropic.com/claude/reference/messages_post) implementations.
 
+mod cache_control;
 mod chunk_stream;
 mod claude_model;
 mod content;
@@ -23,6 +24,7 @@ mod usage;
 pub(crate) mod api;
 mod tool;
 
+pub use cache_control::{CacheControl, CacheControlType};
 pub use claude_model::ClaudeModel;
 pub use content::Content;
 pub use content::ContentBlock;
@@ -43,8 +45,8 @@ pub use error::StreamError;
 pub use error::ToolCallError;
 pub use max_tokens::MaxTokens;
 pub use message::Message;
-pub use message_chunk::ContentBlockDeltaChunk;
 pub use message_chunk::ContentBlockDelta;
+pub use message_chunk::ContentBlockDeltaChunk;
 pub use message_chunk::ContentBlockStart;
 pub use message_chunk::ContentBlockStartChunk;
 pub use message_chunk::ContentBlockStopChunk;
@@ -58,8 +60,8 @@ pub use message_chunk::PingChunk;
 pub use message_chunk::StreamStop;
 pub use message_chunk::TextDeltaContentBlock;
 pub use messages_request_body::MessagesRequestBody;
-pub use messages_request_body::Thinking;
 pub use messages_request_body::MessagesRequestBuilder;
+pub use messages_request_body::Thinking;
 pub use messages_response_body::MessageObjectType;
 pub use messages_response_body::MessagesResponseBody;
 pub use metadata::Metadata;

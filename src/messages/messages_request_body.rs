@@ -1,9 +1,9 @@
+use crate::ValidationError;
 use crate::macros::impl_display_for_serialize;
 use crate::messages::{
     ClaudeModel, MaxTokens, Message, Metadata, StopSequence, StreamOption,
     SystemPrompt, Temperature, ToolDefinition, TopK, TopP,
 };
-use crate::ValidationError;
 
 /// The request body for the Messages API.
 ///
@@ -94,7 +94,7 @@ impl_display_for_serialize!(MessagesRequestBody);
 )]
 pub struct Thinking {
     pub r#type: String,
-    pub budget_tokens: u64
+    pub budget_tokens: u64,
 }
 
 impl_display_for_serialize!(Thinking);
@@ -106,7 +106,7 @@ impl_display_for_serialize!(Thinking);
 /// use clust::messages::{MessagesRequestBuilder, ClaudeModel, Message, SystemPrompt, MaxTokens, Metadata, StopSequence, StreamOption, Temperature, TopP, TopK};
 ///
 /// let thinking = Thinking { r#type: "enabled".into(), budget_tokens: 1024 };
-/// 
+///
 /// let request_body = MessagesRequestBuilder::new(ClaudeModel::Claude37Sonnet20250219)
 ///     .messages(vec![Message::user("Hello, Claude!")])
 ///     .system(SystemPrompt::new("system-prompt"))
@@ -267,7 +267,7 @@ impl MessagesRequestBuilder {
         self.request_body.thinking = Some(thinking);
         self
     }
-    
+
     /// Builds the MessagesRequestBody.
     pub fn build(self) -> MessagesRequestBody {
         self.request_body
@@ -367,6 +367,7 @@ mod tests {
             tools: None,
             top_p: Some(TopP::new(0.5).unwrap()),
             top_k: Some(TopK::new(50)),
+            thinking: None,
         };
         assert_eq!(
             serde_json::to_string(&messages_request_body).unwrap(),
@@ -399,6 +400,7 @@ mod tests {
             tools: None,
             top_p: Some(TopP::new(0.5).unwrap()),
             top_k: Some(TopK::new(50)),
+            thinking: None,
         };
         assert_eq!(
             serde_json::from_str::<MessagesRequestBody>("{\"model\":\"claude-3-sonnet-20240229\",\"messages\":[],\"system\":\"system-prompt\",\"max_tokens\":16,\"metadata\":{\"user_id\":\"metadata\"},\"stop_sequences\":[\"stop-sequence\"],\"stream\":false,\"temperature\":0.5,\"top_p\":0.5,\"top_k\":50}").unwrap(),

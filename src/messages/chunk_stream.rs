@@ -171,6 +171,9 @@ data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_seque
                         usage: Usage {
                             input_tokens: 25,
                             output_tokens: 1,
+                            cache_read_input_tokens: None,
+                            cache_creation_input_tokens: None,
+                            cache_creation: None,
                         },
                     }),
                 );
@@ -273,10 +276,12 @@ data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_seque
             | _ => panic!("unexpected chunk type"),
         }
 
-        assert!(chunk_stream
-            .next()
-            .await
-            .is_none());
+        assert!(
+            chunk_stream
+                .next()
+                .await
+                .is_none()
+        );
     }
 
     #[tokio::test]
@@ -333,6 +338,9 @@ data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_seque
                         usage: Usage {
                             input_tokens: 25,
                             output_tokens: 1,
+                            cache_read_input_tokens: None,
+                            cache_creation_input_tokens: None,
+                            cache_creation: None,
                         },
                     }),
                 );
@@ -435,9 +443,11 @@ data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_seque
             | _ => panic!("unexpected chunk type"),
         }
 
-        assert!(chunk_stream
-            .next()
-            .await
-            .is_none());
+        assert!(
+            chunk_stream
+                .next()
+                .await
+                .is_none()
+        );
     }
 }

@@ -13,12 +13,12 @@ use std::time::Duration;
 
 use clap::Parser;
 
+use clust::ApiKey;
+use clust::ClientBuilder;
 use clust::messages::ClaudeModel;
 use clust::messages::Message;
 use clust::messages::MessagesRequestBuilder;
 use clust::messages::SystemPrompt;
-use clust::ApiKey;
-use clust::ClientBuilder;
 
 #[derive(Parser)]
 struct Arguments {

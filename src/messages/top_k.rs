@@ -57,7 +57,7 @@ mod tests {
         let top_k = TopK::new(50);
         assert_eq!(top_k.value, 50);
     }
-    
+
     #[test]
     fn default() {
         assert_eq!(TopK::default().value, 50);
@@ -66,12 +66,9 @@ mod tests {
     #[test]
     fn display() {
         let top_k = TopK::new(50);
-        assert_eq!(
-            top_k.to_string(),
-            "50"
-        );
+        assert_eq!(top_k.to_string(), "50");
     }
-    
+
     #[test]
     fn serialize() {
         let top_k = TopK::new(50);
@@ -80,7 +77,7 @@ mod tests {
             "50"
         );
     }
-    
+
     #[test]
     fn deserialize() {
         let top_k = TopK::new(50);

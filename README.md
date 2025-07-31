@@ -242,6 +242,55 @@ let request_body = MessagesRequestBuilder::new_with_max_tokens(
 .build();
 ```
 
+### Advanced System Prompts with Cache Control
+
+You can create advanced system prompts with granular cache control for individual content blocks. This allows you to cache specific parts of your system prompt while keeping others dynamic.
+
+```rust,no_run
+use clust::messages::{MessagesRequestBody, ClaudeModel, Message, MaxTokens, SystemPrompt, CacheControl};
+
+// Create an advanced system prompt with cache control
+let system_prompt = SystemPrompt::from_text_blocks_with_cache_control(vec![
+    (
+        "You are an AI assistant tasked with analyzing literary works. Your goal is to provide insightful commentary on themes, characters, and writing style.\n",
+        None, // No cache control for the instruction
+    ),
+    (
+        "<the entire contents of Pride and Prejudice>",
+        Some(CacheControl::default()), // Cache this content with ephemeral cache control
+    ),
+]);
+
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    messages: vec![Message::user("Analyze the major themes in Pride and Prejudice.")],
+    max_tokens: MaxTokens::new(1024, ClaudeModel::Claude3Sonnet20240229).unwrap(),
+    system: Some(system_prompt),
+    ..Default::default()
+};
+```
+
+You can also create content blocks directly with cache control:
+
+```rust,no_run
+use clust::messages::{ContentBlock, TextContentBlock, CacheControl, SystemPrompt};
+
+let system_prompt = SystemPrompt::from_content_blocks(vec![
+    ContentBlock::Text(TextContentBlock::new(
+        "You are an AI assistant tasked with analyzing literary works."
+    )),
+    ContentBlock::Text(TextContentBlock::new_with_cache_control(
+        "<the entire contents of Pride and Prejudice>",
+        CacheControl::default(),
+    )),
+]);
+```
+
+This approach allows for fine-grained control over what gets cached, improving performance and reducing costs for repeated requests with the same content.
+
+See [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) for more details.
+```
+
 ### API calling
 
 Call the API by `clust::Client::create_a_message` with the request body.

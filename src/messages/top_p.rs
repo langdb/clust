@@ -87,10 +87,7 @@ mod tests {
     #[test]
     fn display() {
         let top_p = TopP::new(1.0);
-        assert_eq!(
-            top_p.unwrap().to_string(),
-            "1"
-        );
+        assert_eq!(top_p.unwrap().to_string(), "1");
     }
 
     #[test]
@@ -101,7 +98,7 @@ mod tests {
             "1.0"
         );
     }
-    
+
     #[test]
     fn deserialize() {
         let top_p = TopP::new(1.0);

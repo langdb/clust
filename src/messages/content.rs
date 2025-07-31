@@ -7,7 +7,8 @@ use crate::macros::{
     impl_enum_with_string_or_array_serialization,
 };
 use crate::messages::{
-    ContentFlatteningError, ImageMediaTypeParseError, ToolResult, ToolUse,
+    CacheControl, ContentFlatteningError, ImageMediaTypeParseError, ToolResult,
+    ToolUse,
 };
 
 /// The content of the message.
@@ -275,6 +276,9 @@ pub struct TextContentBlock {
     pub _type: ContentType,
     /// The text content.
     pub text: String,
+    /// Optional cache control for this content block.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_control: Option<CacheControl>,
 }
 
 impl Default for TextContentBlock {
@@ -282,6 +286,7 @@ impl Default for TextContentBlock {
         Self {
             _type: ContentType::Text,
             text: String::new(),
+            cache_control: None,
         }
     }
 }
@@ -309,6 +314,22 @@ impl TextContentBlock {
         Self {
             _type: ContentType::Text,
             text: text.into(),
+            cache_control: None,
+        }
+    }
+
+    /// Creates a new text content block with cache control.
+    pub fn new_with_cache_control<S>(
+        text: S,
+        cache_control: CacheControl,
+    ) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            _type: ContentType::Text,
+            text: text.into(),
+            cache_control: Some(cache_control),
         }
     }
 }
@@ -351,7 +372,10 @@ impl From<&str> for ThinkingContentBlock {
 
 impl ThinkingContentBlock {
     /// Creates a new thinking content block.
-    pub fn new<S>(thinking: S, signature: S) -> Self
+    pub fn new<S>(
+        thinking: S,
+        signature: S,
+    ) -> Self
     where
         S: Into<String>,
     {
@@ -420,7 +444,7 @@ pub enum ContentType {
     /// tool_result
     ToolResult,
     /// input_json_delta
-    InputJsonDelta
+    InputJsonDelta,
 }
 
 impl Default for ContentType {
@@ -451,7 +475,7 @@ impl Display for ContentType {
                 write!(f, "tool_result")
             },
             | ContentType::InputJsonDelta => {
-                  write!(f, "input_json_delta")
+                write!(f, "input_json_delta")
             },
             | ContentType::Thinking => {
                 write!(f, "thinking")
@@ -461,7 +485,7 @@ impl Display for ContentType {
             },
             | ContentType::SignatureDelta => {
                 write!(f, "signature_delta")
-            }
+            },
         }
     }
 }
@@ -996,6 +1020,7 @@ mod tests {
             TextContentBlock {
                 _type: ContentType::Text,
                 text: "text".to_string(),
+                cache_control: None,
             }
         );
     }
@@ -1007,6 +1032,7 @@ mod tests {
             TextContentBlock {
                 _type: ContentType::Text,
                 text: String::new(),
+                cache_control: None,
             }
         );
     }
@@ -1273,6 +1299,7 @@ mod tests {
             ContentBlock::Text(TextContentBlock {
                 _type: ContentType::Text,
                 text: "text".to_string(),
+                cache_control: None,
             })
         );
 
@@ -1685,9 +1712,11 @@ mod tests {
             "text"
         );
 
-        assert!(Content::from(vec![])
-            .flatten_into_text()
-            .is_err());
+        assert!(
+            Content::from(vec![])
+                .flatten_into_text()
+                .is_err()
+        );
 
         assert!(
             Content::from(ImageContentSource::default())
@@ -1695,37 +1724,47 @@ mod tests {
                 .is_err()
         );
 
-        assert!(Content::from(vec![
-            ContentBlock::from(ImageContentSource::default()),
-            ContentBlock::from("text"),
-        ])
-        .flatten_into_text()
-        .is_err());
+        assert!(
+            Content::from(vec![
+                ContentBlock::from(ImageContentSource::default()),
+                ContentBlock::from("text"),
+            ])
+            .flatten_into_text()
+            .is_err()
+        );
     }
 
     #[test]
     fn flatten_into_image_source() {
-        assert!(Content::from("text")
+        assert!(
+            Content::from("text")
+                .flatten_into_image_source()
+                .is_err()
+        );
+
+        assert!(
+            Content::from(vec![
+                ContentBlock::from("text"),
+                ContentBlock::from(ImageContentSource::default()),
+            ])
             .flatten_into_image_source()
-            .is_err());
+            .is_err()
+        );
 
-        assert!(Content::from(vec![
-            ContentBlock::from("text"),
-            ContentBlock::from(ImageContentSource::default()),
-        ])
-        .flatten_into_image_source()
-        .is_err());
-
-        assert!(Content::from(vec![
-            ContentBlock::from("text"),
-            ContentBlock::from("second"),
-        ])
-        .flatten_into_image_source()
-        .is_err());
-
-        assert!(Content::from(vec![])
+        assert!(
+            Content::from(vec![
+                ContentBlock::from("text"),
+                ContentBlock::from("second"),
+            ])
             .flatten_into_image_source()
-            .is_err());
+            .is_err()
+        );
+
+        assert!(
+            Content::from(vec![])
+                .flatten_into_image_source()
+                .is_err()
+        );
 
         assert_eq!(
             *Content::from(ImageContentSource::default())
@@ -1747,27 +1786,35 @@ mod tests {
 
     #[test]
     fn flatten_into_tool_use() {
-        assert!(Content::from("text")
+        assert!(
+            Content::from("text")
+                .flatten_into_tool_use()
+                .is_err()
+        );
+
+        assert!(
+            Content::from(vec![
+                ContentBlock::from("text"),
+                ContentBlock::from(ImageContentSource::default()),
+            ])
             .flatten_into_tool_use()
-            .is_err());
+            .is_err()
+        );
 
-        assert!(Content::from(vec![
-            ContentBlock::from("text"),
-            ContentBlock::from(ImageContentSource::default()),
-        ])
-        .flatten_into_tool_use()
-        .is_err());
-
-        assert!(Content::from(vec![
-            ContentBlock::from("text"),
-            ContentBlock::from("second"),
-        ])
-        .flatten_into_tool_use()
-        .is_err());
-
-        assert!(Content::from(vec![])
+        assert!(
+            Content::from(vec![
+                ContentBlock::from("text"),
+                ContentBlock::from("second"),
+            ])
             .flatten_into_tool_use()
-            .is_err());
+            .is_err()
+        );
+
+        assert!(
+            Content::from(vec![])
+                .flatten_into_tool_use()
+                .is_err()
+        );
 
         assert!(
             Content::from(ImageContentSource::default())
@@ -1796,27 +1843,35 @@ mod tests {
 
     #[test]
     fn flatten_into_tool_result() {
-        assert!(Content::from("text")
+        assert!(
+            Content::from("text")
+                .flatten_into_tool_result()
+                .is_err()
+        );
+
+        assert!(
+            Content::from(vec![
+                ContentBlock::from("text"),
+                ContentBlock::from(ImageContentSource::default()),
+            ])
             .flatten_into_tool_result()
-            .is_err());
+            .is_err()
+        );
 
-        assert!(Content::from(vec![
-            ContentBlock::from("text"),
-            ContentBlock::from(ImageContentSource::default()),
-        ])
-        .flatten_into_tool_result()
-        .is_err());
-
-        assert!(Content::from(vec![
-            ContentBlock::from("text"),
-            ContentBlock::from("second"),
-        ])
-        .flatten_into_tool_result()
-        .is_err());
-
-        assert!(Content::from(vec![])
+        assert!(
+            Content::from(vec![
+                ContentBlock::from("text"),
+                ContentBlock::from("second"),
+            ])
             .flatten_into_tool_result()
-            .is_err());
+            .is_err()
+        );
+
+        assert!(
+            Content::from(vec![])
+                .flatten_into_tool_result()
+                .is_err()
+        );
 
         assert!(
             Content::from(ImageContentSource::default())
