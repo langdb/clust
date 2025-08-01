@@ -7,6 +7,8 @@ use std::fmt::Display;
 pub enum Beta {
     /// tools-2024-04-04
     Tools2024_04_04,
+    /// extended-cache-ttl-2025-04-11
+    ExtendedCacheTtl2025_04_11,
 }
 
 impl Default for Beta {
@@ -23,6 +25,9 @@ impl Display for Beta {
         match self {
             | Beta::Tools2024_04_04 => {
                 write!(f, "tools-2024-04-04")
+            },
+            | Beta::ExtendedCacheTtl2025_04_11 => {
+                write!(f, "extended-cache-ttl-2025-04-11")
             },
         }
     }
@@ -42,6 +47,10 @@ mod tests {
         assert_eq!(
             Beta::Tools2024_04_04.to_string(),
             "tools-2024-04-04",
+        );
+        assert_eq!(
+            Beta::ExtendedCacheTtl2025_04_11.to_string(),
+            "extended-cache-ttl-2025-04-11",
         );
     }
 }

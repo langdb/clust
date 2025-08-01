@@ -268,6 +268,19 @@ impl_enum_struct_serialization!(
 
 impl_display_for_serialize!(ContentBlock);
 
+impl ContentBlock {
+    /// Get the cache control for this content block, if any.
+    pub fn cache_control(&self) -> Option<&CacheControl> {
+        match self {
+            ContentBlock::Text(block) => block.cache_control.as_ref(),
+            ContentBlock::Thinking(_) => None,
+            ContentBlock::Image(_) => None,
+            ContentBlock::ToolUse(_) => None,
+            ContentBlock::ToolResult(_) => None,
+        }
+    }
+}
+
 /// The text content block.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TextContentBlock {

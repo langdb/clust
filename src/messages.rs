@@ -24,7 +24,7 @@ mod usage;
 pub(crate) mod api;
 mod tool;
 
-pub use cache_control::{CacheControl, CacheControlType};
+pub use cache_control::{CacheControl, CacheControlType, CacheTtl};
 pub use claude_model::ClaudeModel;
 pub use content::Content;
 pub use content::ContentBlock;
