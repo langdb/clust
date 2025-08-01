@@ -1,270 +1,77 @@
 # clust
 
-An unofficial Rust client
-for [the Anthropic/Claude API](https://docs.anthropic.com/claude/reference/getting-started-with-the-api).
+A Rust client for the [Anthropic Claude API](https://docs.anthropic.com/claude/reference).
+
+## Features
+
+- **Full API Coverage**: Complete implementation of the Messages API
+- **Type Safety**: Strongly typed request and response structures
+- **Async/Await**: Built on top of `tokio` and `reqwest`
+- **Streaming Support**: Real-time streaming of responses
+- **Error Handling**: Comprehensive error types and handling
+- **Builder Pattern**: Fluent API for constructing requests
+- **Cache Control**: Support for granular cache control with TTL options
+- **1-Hour Caching**: Extended cache TTL support for longer caching periods
 
 ## Installation
 
-Run the following Cargo command in your project directory:
-
-```shell
-cargo add clust
-```
-
-or add the following line to your Cargo.toml:
+Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-clust = "0.9.0"
+clust = "0.9"
+tokio = { version = "1.0", features = ["full"] }
 ```
 
-## Supported APIs
+## Quick Start
 
-- Messages
-    - [x] [Create a Message](https://docs.anthropic.com/claude/reference/messages_post)
-    - [x] [Streaming Messages](https://docs.anthropic.com/claude/reference/messages-streaming)
-
-## Feature flags
-
-- `macros`: Enable the `clust::attributse::clust_tool` attribute macro for generating `clust::messages::Tool`
-  or `clust::messages::AsyncTool` from a Rust function.
-
-## Usages
-
-### API key and client
-
-First you need to create a new API client: `clust::Client` with your Anthropic API key from environment variable: "
-ANTHROPIC_API_KEY"
-
-```rust,no_run
+```rust
 use clust::Client;
+use clust::messages::{MessagesRequestBody, ClaudeModel, Message, MaxTokens};
 
-let client = Client::from_env().unwrap();
-```
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    // Create a client
+    let client = Client::from_env()?;
 
-or specify the API key directly:
+    // Create a request
+    let model = ClaudeModel::Claude3Sonnet20240229;
+    let max_tokens = MaxTokens::new(1024, model)?;
+    let request_body = MessagesRequestBody {
+        model,
+        max_tokens,
+        messages: vec![Message::user("Hello, Claude!")],
+        ..Default::default()
+    };
 
-```rust,no_run
-use clust::Client;
-use clust::ApiKey;
+    // Send the request
+    let response = client.create_a_message(request_body).await?;
+    println!("Response: {}", response.content[0].text());
 
-let client = Client::from_api_key(ApiKey::new("your-api-key"));
-```
-
-If you want to customize the client, you can use builder pattern by `clust::ClientBuilder`:
-
-```rust,no_run
-use clust::ClientBuilder;
-use clust::ApiKey;
-use clust::Version;
-
-let client = ClientBuilder::new(ApiKey::new("your-api-key"))
-    .version(Version::V2023_06_01)
-    .client(reqwest::ClientBuilder::new().timeout(std::time::Duration::from_secs(10)).build().unwrap())
-    .build();
-```
-
-### Models and max tokens
-
-You can specify the model by `clust::messages::ClaudeModel`.
-
-```rust,no_run
-use clust::messages::ClaudeModel;
-use clust::messages::MessagesRequestBody;
-
-let model = ClaudeModel::Claude3Sonnet20240229;
-
-let request_body = MessagesRequestBody {
-    model,
-    ..Default::default ()
-};
-```
-
-Because max number of tokens of text generation: `clust::messages::MaxTokens` depends on the model,
-you need to create `clust::messages::MaxTokens` with the model.
-
-```rust,no_run
-use clust::messages::ClaudeModel;
-use clust::messages::MaxTokens;
-use clust::messages::MessagesRequestBody;
-
-let model = ClaudeModel::Claude3Sonnet20240229;
-let max_tokens = MaxTokens::new(1024, model).unwrap();
-
-let request_body = MessagesRequestBody {
-    model,
-    max_tokens,
-    ..Default::default ()
-};
-```
-
-### Prompt
-
-You can specify the system prompt by `clust::messages::SystemPrompt` and there is no "system" role in the message.
-
-```rust,no_run
-use clust::messages::SystemPrompt;
-use clust::messages::MessagesRequestBody;
-
-let system_prompt = SystemPrompt::new("You are an excellent AI assistant.");
-
-let request_body = MessagesRequestBody {
-    system: Some(system_prompt),
-    ..Default::default ()
-};
-```
-
-### Messages and contents
-
-Build messages by a vector of `clust::messages::Message`:
-
-```rust,no_run
-use clust::messages::Role;
-use clust::messages::Content;
-
-/// The message.
-pub struct Message {
-    /// The role of the message.
-    pub role: Role,
-    /// The content of the message.
-    pub content: Content,
+    Ok(())
 }
 ```
 
-You can create each role message as follows:
-
-```rust,no_run
-use clust::messages::Message;
-
-let message = Message::user("Hello, Claude!");
-let message = Message::assistant("Hello, user!");
-```
-
-and a content: `clust::messages::Content`.
-
-```rust,no_run
-use clust::messages::ContentBlock;
-
-/// The content of the message.
-pub enum Content {
-    /// The single text content.
-    SingleText(String),
-    /// The multiple content blocks.
-    MultipleBlocks(Vec<ContentBlock>),
-}
-```
-
-Multiple blocks is a vector of content block: `clust::messages::ContentBlock`:
-
-```rust,no_run
-use clust::messages::TextContentBlock;
-use clust::messages::ImageContentBlock;
-
-/// The content block of the message.
-pub enum ContentBlock {
-    /// The text content block.
-    Text(TextContentBlock),
-    /// The image content block.
-    Image(ImageContentBlock),
-}
-```
-
-You can create a content as follows:
-
-```rust,no_run
-use clust::messages::Content;
-use clust::messages::ContentBlock;
-use clust::messages::TextContentBlock;
-use clust::messages::ImageContentBlock;
-use clust::messages::ImageContentSource;
-use clust::messages::ImageMediaType;
-
-// Single text content
-let content = Content::SingleText("Hello, Claude!".to_string());
-// or use `From` trait
-let content = Content::from("Hello, Claude!");
-
-// Multiple content blocks
-let content = Content::MultipleBlocks(vec![
-    ContentBlock::Text(TextContentBlock::new("Hello, Claude!")),
-    ContentBlock::Image(ImageContentBlock::new(ImageContentSource::base64(
-        ImageMediaType::Png,
-        "Base64 encoded image data",
-    ))),
-]);
-// or use `From` trait for `String` or `ImageContentSource`
-let content = Content::from(vec![
-    ContentBlock::from("Hello, Claude!"),
-    ContentBlock::from(ImageContentSource::base64(
-        ImageMediaType::Png,
-        "Base64 encoded image data",
-    )),
-]);
-
-```
-
-### Request body
-
-The request body is defined by `clust::messages::MessagesRequestBody`.
-
-See also `MessagesRequestBody` for other options.
-
-```rust,no_run
-use clust::messages::MessagesRequestBody;
-use clust::messages::ClaudeModel;
-use clust::messages::Message;
-use clust::messages::MaxTokens;
-use clust::messages::SystemPrompt;
-
-let request_body = MessagesRequestBody {
-    model: ClaudeModel::Claude3Sonnet20240229,
-    messages: vec![Message::user("Hello, Claude!")],
-    max_tokens: MaxTokens::new(1024, ClaudeModel::Claude3Sonnet20240229).unwrap(),
-    system: Some(SystemPrompt::new("You are an excellent AI assistant.")),
-    ..Default::default ()
-};
-```
-
-You can also use the builder pattern with `clust::messages::MessagesRequestBuilder`:
-
-```rust,no_run
-use clust::messages::MessagesRequestBuilder;
-use clust::messages::ClaudeModel;
-use clust::messages::Message;
-use clust::messages::SystemPrompt;
-
-let request_body = MessagesRequestBuilder::new_with_max_tokens(
-    ClaudeModel::Claude3Sonnet20240229,
-    1024,
-).unwrap()
-.messages(vec![Message::user("Hello, Claude!")])
-.system(SystemPrompt::new("You are an excellent AI assistant."))
-.build();
-```
-
-### Advanced System Prompts with Cache Control
+## Advanced System Prompts with Cache Control
 
 You can create advanced system prompts with granular cache control for individual content blocks. This allows you to cache specific parts of your system prompt while keeping others dynamic.
 
-```rust,no_run
+```rust
 use clust::messages::{MessagesRequestBody, ClaudeModel, Message, MaxTokens, SystemPrompt, CacheControl};
 
 // Create an advanced system prompt with cache control
 let system_prompt = SystemPrompt::from_text_blocks_with_cache_control(vec![
+    ("You are a helpful assistant.", None), // No cache control for the instruction
     (
-        "You are an AI assistant tasked with analyzing literary works. Your goal is to provide insightful commentary on themes, characters, and writing style.\n",
-        None, // No cache control for the instruction
-    ),
-    (
-        "<the entire contents of Pride and Prejudice>",
+        "You have access to the following information that should be cached: The weather in New York is currently sunny with a temperature of 72°F.",
         Some(CacheControl::default()), // Cache this content with ephemeral cache control
     ),
 ]);
 
 let request_body = MessagesRequestBody {
     model: ClaudeModel::Claude3Sonnet20240229,
-    messages: vec![Message::user("Analyze the major themes in Pride and Prejudice.")],
-    max_tokens: MaxTokens::new(1024, ClaudeModel::Claude3Sonnet20240229).unwrap(),
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("What's the weather like?")],
     system: Some(system_prompt),
     ..Default::default()
 };
@@ -272,287 +79,325 @@ let request_body = MessagesRequestBody {
 
 You can also create content blocks directly with cache control:
 
-```rust,no_run
+```rust
 use clust::messages::{ContentBlock, TextContentBlock, CacheControl, SystemPrompt};
 
-let system_prompt = SystemPrompt::from_content_blocks(vec![
-    ContentBlock::Text(TextContentBlock::new(
-        "You are an AI assistant tasked with analyzing literary works."
-    )),
-    ContentBlock::Text(TextContentBlock::new_with_cache_control(
-        "<the entire contents of Pride and Prejudice>",
+let content_block = ContentBlock::Text(
+    TextContentBlock::new_with_cache_control(
+        "This content will be cached",
         CacheControl::default(),
-    )),
-]);
+    ),
+);
+
+let system_prompt = SystemPrompt::from_content_blocks(vec![content_block]);
 ```
 
 This approach allows for fine-grained control over what gets cached, improving performance and reducing costs for repeated requests with the same content.
 
-See [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) for more details.
-```
+## 1-Hour Caching Support
 
-### API calling
+The library supports extended cache TTL with 1-hour caching periods. When you specify a 1-hour TTL, the client automatically adds the required beta header.
 
-Call the API by `clust::Client::create_a_message` with the request body.
+### Basic 1-Hour Cache Usage
 
-```rust,no_run
-use clust::Client;
-use clust::messages::MessagesRequestBody;
+```rust
+use clust::messages::{
+    CacheControl, CacheTtl, ClaudeModel, ContentBlock, MaxTokens, Message,
+    MessagesRequestBody, Role, SystemPrompt, TextContentBlock,
+};
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let client = Client::from_env()?;
-    let request_body = MessagesRequestBody::default();
+// Create a system prompt with 1-hour cache control
+let system_prompt = SystemPrompt::from_text_blocks_with_cache_control(vec![
+    ("You are a helpful assistant.", None), // No cache control for basic instruction
+    (
+        "You have access to the following information that should be cached for 1 hour: The weather in New York is currently sunny with a temperature of 72°F.",
+        Some(CacheControl {
+            _type: clust::messages::CacheControlType::Ephemeral,
+            ttl: Some(CacheTtl::OneHour),
+        }),
+    ),
+]);
 
-    // Call the async API.
-    let response = client
-        .create_a_message(request_body)
-        .await?;
+// Create a message with 1-hour cache control
+let message = Message {
+    role: Role::User,
+    content: vec![ContentBlock::Text(
+        TextContentBlock::new_with_cache_control(
+            "What's the weather like in New York?",
+            CacheControl {
+                _type: clust::messages::CacheControlType::Ephemeral,
+                ttl: Some(CacheTtl::OneHour),
+            },
+        ),
+    )],
+};
 
-    // You can extract the text content from `clust::messages::MessagesResponseBody.content.flatten_into_text()`.
-    println!("Content: {}", response.content.flatten_into_text()?);
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![message],
+    system: Some(system_prompt),
+    ..Default::default()
+};
 
-    Ok(())
+let response = client.create_a_message(request_body).await?;
+
+// The response will include cache creation information
+if let Some(cache_creation) = response.usage.cache_creation {
+    println!("5m cache input tokens: {}", cache_creation.ephemeral_5m_input_tokens);
+    println!("1h cache input tokens: {}", cache_creation.ephemeral_1h_input_tokens);
 }
 ```
 
-### Streaming
+### Cache Control Options
 
-When you want to stream the response incrementally,
-you can use `clust::Client::create_a_message_stream` with the stream option: `StreamOption::ReturnStream`.
+The `CacheControl` struct supports the following TTL options:
 
-```rust,no_run
-use clust::Client;
-use clust::messages::MessagesRequestBody;
-use clust::messages::StreamOption;
+- **Default (5 minutes)**: `CacheControl::default()` or `ttl: None`
+- **5 minutes**: `ttl: Some(CacheTtl::FiveMinutes)`
+- **1 hour**: `ttl: Some(CacheTtl::OneHour)`
 
+When using 1-hour TTL, the client automatically adds the `extended-cache-ttl-2025-04-11` beta header to the request.
+
+### Cache Control in Content Blocks
+
+You can apply cache control to individual content blocks:
+
+```rust
+use clust::messages::{ContentBlock, TextContentBlock, CacheControl, CacheTtl};
+
+// Content block with 1-hour cache
+let cached_block = ContentBlock::Text(
+    TextContentBlock::new_with_cache_control(
+        "This content will be cached for 1 hour",
+        CacheControl {
+            _type: clust::messages::CacheControlType::Ephemeral,
+            ttl: Some(CacheTtl::OneHour),
+        },
+    ),
+);
+
+// Content block with 5-minute cache (default)
+let short_cached_block = ContentBlock::Text(
+    TextContentBlock::new_with_cache_control(
+        "This content will be cached for 5 minutes",
+        CacheControl {
+            _type: clust::messages::CacheControlType::Ephemeral,
+            ttl: Some(CacheTtl::FiveMinutes),
+        },
+    ),
+);
+
+// Content block with no cache control
+let uncached_block = ContentBlock::Text(TextContentBlock::new("This content won't be cached"));
+```
+
+## Streaming
+
+For real-time streaming of responses:
+
+```rust
+use clust::messages::{MessagesRequestBody, ClaudeModel, Message, MaxTokens, StreamOption};
 use tokio_stream::StreamExt;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let client = Client::from_env()?;
-    let request_body = MessagesRequestBody {
-        stream: Some(StreamOption::ReturnStream),
-        ..Default::default()
-    };
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Tell me a story")],
+    stream: Some(StreamOption::ReturnStream),
+    ..Default::default()
+};
 
-    // Call the async API and get the stream.
-    let mut stream = client
-        .create_a_message_stream(request_body)
-        .await?;
+let mut stream = client.create_a_message_stream(request_body).await?;
 
-    // Poll the stream.
-    while let Some(chunk) = stream.next().await {
-         // Handle the chunk.
+while let Some(chunk) = stream.next().await {
+    match chunk {
+        Ok(chunk) => {
+            // Process the chunk
+            println!("Chunk: {:?}", chunk);
+        }
+        Err(error) => {
+            // Handle the error
+            eprintln!("Error: {:?}", error);
+        }
     }
-
-    Ok(())
 }
 ```
 
-### Tool use
+## Error Handling
 
-Support [tool use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use) for two methods:
+The library provides comprehensive error handling:
 
-#### 1. Use `clust_tool` attribute macro for Rust function
+```rust
+use clust::messages::MessagesError;
 
-When you define a tool as Rust function with documentation comment like this:
-
-```txt
-/// Get the current weather in a given location
-///
-/// ## Arguments
-/// - `location` - The city and state, e.g. San Francisco, CA
-fn get_weather(location: String) -> String {
-    "15 degrees".to_string() // Dummy response
+match client.create_a_message(request_body).await {
+    Ok(response) => {
+        println!("Success: {}", response.content[0].text());
+    }
+    Err(MessagesError::ApiError(api_error)) => {
+        eprintln!("API Error: {}", api_error);
+    }
+    Err(MessagesError::ClientError(client_error)) => {
+        eprintln!("Client Error: {}", client_error);
+    }
+    Err(MessagesError::StreamOptionMismatch) => {
+        eprintln!("Stream option mismatch");
+    }
 }
 ```
 
-you can use the `clust::clust_macros::clust_tool` attribute macro with `macros` feature flag to generate code:
+## Builder Pattern
 
-```txt
-/// Get the current weather in a given location
-///
-/// ## Arguments
-/// - `location` - The city and state, e.g. San Francisco, CA
-#[clust_tool] // <- Generate `clust::messages::Tool` for this function
-fn get_weather(location: String) -> String {
-    "15 degrees".to_string() // Dummy response
-}
+You can use the builder pattern for constructing requests:
+
+```rust
+use clust::messages::{MessagesRequestBuilder, ClaudeModel, Message};
+
+let request_body = MessagesRequestBuilder::new(ClaudeModel::Claude3Sonnet20240229)
+    .messages(vec![Message::user("Hello, Claude!")])
+    .max_tokens(MaxTokens::new(1024, ClaudeModel::Claude3Sonnet20240229)?)
+    .temperature(Temperature::new(0.7)?)
+    .build();
 ```
-
-and create an instance of `clust::messages::Tool` that named by `ClustTool_{function_name}` from the function:
-
-```txt
-let tool = ClustTool_get_weather {};
-```
-
-Get the tool definition from `clust::messages::Tool` for API request:
-
-```txt
-let tool_definition = tool.definition();
-```
-
-and call the tool with tool use got from the API response:
-
-```txt
-let tool_result = tool.call(tool_use);
-```
-
-See also [a tool use example](./examples/tool_use.rs) and [clust_tool](./clust_macros/src/lib.rs) for details.
-
-#### 2. Manually implement `clust::messages::Tool` or `clust::messages::AsyncTool`
-
-You can manually implement `clust::messages::Tool` or `clust::messages::AsyncTool` for your tool.
 
 ## Examples
 
-### Create a message
+See the [examples](examples/) directory for more detailed usage examples:
 
-An example of creating a message with the API key loaded from the environment variable: `ANTHROPIC_API_KEY`
+- [Basic message creation](examples/create_a_message.rs)
+- [Streaming messages](examples/streaming_messages.rs)
+- [Advanced system prompts with cache control](examples/advanced_system_prompt.rs)
+- [1-hour caching](examples/one_hour_cache.rs)
+- [Tool use](examples/tool_use.rs)
+- [Conversation management](examples/conversation.rs)
 
-```env
-ANTHROPIC_API_KEY={your-api-key}
-```
+## API Reference
 
-is as follows:
+The request body is defined by `clust::messages::MessagesRequestBody`.
 
-```rust,no_run
-use clust::messages::ClaudeModel;
-use clust::messages::MaxTokens;
-use clust::messages::Message;
+See also `MessagesRequestBody` for other options.
+
+### Basic Usage
+
+```rust
 use clust::messages::MessagesRequestBody;
-use clust::messages::SystemPrompt;
-use clust::Client;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // 1. Create a new API client with the API key loaded from the environment variable: `ANTHROPIC_API_KEY`.
-    let client = Client::from_env()?;
-
-    // 2. Create a request body.
-    let model = ClaudeModel::Claude3Sonnet20240229;
-    let messages = vec![Message::user(
-        "Where is the capital of France?",
-    )];
-    let max_tokens = MaxTokens::new(1024, model)?;
-    let system_prompt = SystemPrompt::new("You are an excellent AI assistant.");
-    let request_body = MessagesRequestBody {
-        model,
-        messages,
-        max_tokens,
-        system: Some(system_prompt),
-        ..Default::default()
-    };
-
-    // 3. Call the API.
-    let response = client
-        .create_a_message(request_body)
-        .await?;
-
-    println!("Result:\n{}", response);
-
-    Ok(())
-}
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Hello, Claude!")],
+    ..Default::default()
+};
 ```
 
-### Streaming messages with `tokio` backend
+### With System Prompt
 
-An example of creating a message stream with the API key loaded from the environment variable: `ANTHROPIC_API_KEY`
+```rust
+use clust::messages::{MessagesRequestBody, SystemPrompt};
 
-```env
-ANTHROPIC_API_KEY={your-api-key}
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Hello, Claude!")],
+    system: Some(SystemPrompt::new("You are a helpful assistant.")),
+    ..Default::default()
+};
 ```
 
-with [tokio-stream](https://docs.rs/tokio-stream/latest/tokio_stream/) is as follows:
+### With Metadata
 
-```rust,no_run
-use clust::messages::ClaudeModel;
-use clust::messages::MaxTokens;
-use clust::messages::Message;
-use clust::messages::MessagesRequestBody;
-use clust::messages::SystemPrompt;
-use clust::messages::StreamOption;
-use clust::messages::StreamChunk;
-use clust::Client;
+```rust
+use clust::messages::{MessagesRequestBody, Metadata, UserId};
 
-use tokio_stream::StreamExt;
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // 1. Create a new API client with the API key loaded from the environment variable: `ANTHROPIC_API_KEY`.
-    let client = Client::from_env()?;
-
-    // 2. Create a request body with `stream` option.
-    let model = ClaudeModel::Claude3Sonnet20240229;
-    let messages = vec![Message::user(
-        "Where is the capital of France?",
-    )];
-    let max_tokens = MaxTokens::new(1024, model)?;
-    let system_prompt = SystemPrompt::new("You are an excellent AI assistant.");
-    let request_body = MessagesRequestBody {
-        model,
-        messages,
-        max_tokens,
-        system: Some(system_prompt),
-        stream: Some(StreamOption::ReturnStream),
-        ..Default::default()
-    };
-
-    // 3. Call the streaming API.
-    let mut stream = client
-        .create_a_message_stream(request_body)
-        .await?;
-
-    let mut buffer = String::new();
-
-    // 4. Poll the stream.
-    // NOTE: The `tokio_stream::StreamExt` run on the `tokio` runtime.
-    while let Some(chunk) = stream.next().await {
-        match chunk {
-            | Ok(chunk) => {
-                println!("Chunk:\n{}", chunk);
-                match chunk {
-                    | StreamChunk::ContentBlockDelta(content_block_delta) => {
-                        // Buffer message delta.
-                        buffer.push_str(&content_block_delta.delta.text);
-                    }
-                    | _ => {}
-                }
-            }
-            | Err(error) => {
-                eprintln!("Chunk error:\n{:?}", error);
-            }
-        }
-    }
-
-    println!("Result:\n{}", buffer);
-
-    Ok(())
-}
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Hello, Claude!")],
+    metadata: Some(Metadata::new(UserId::new("user-123"))),
+    ..Default::default()
+};
 ```
 
-### Create a message with vision
+### With Stop Sequences
 
-See [an example with vision](./examples/create_a_message_with_vision.rs).
+```rust
+use clust::messages::{MessagesRequestBody, StopSequence};
 
-### Conversation
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Hello, Claude!")],
+    stop_sequences: Some(vec![StopSequence::new("END")]),
+    ..Default::default()
+};
+```
 
-See [a conversation example](./examples/conversation.rs).
+### With Temperature
 
-### Tool use
+```rust
+use clust::messages::{MessagesRequestBody, Temperature};
 
-See [a tool use example](./examples/tool_use.rs).
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Hello, Claude!")],
+    temperature: Some(Temperature::new(0.7)?),
+    ..Default::default()
+};
+```
 
-### Other examples
+### With Tools
 
-See also the [examples](./examples) directory for more examples.
+```rust
+use clust::messages::{MessagesRequestBody, ToolDefinition};
 
-## Changelog
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Hello, Claude!")],
+    tools: Some(vec![ToolDefinition::new("get_weather", "Get the weather")]),
+    ..Default::default()
+};
+```
 
-See [CHANGELOG](./CHANGELOG.md).
+### With Top P
+
+```rust
+use clust::messages::{MessagesRequestBody, TopP};
+
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Hello, Claude!")],
+    top_p: Some(TopP::new(0.9)?),
+    ..Default::default()
+};
+```
+
+### With Top K
+
+```rust
+use clust::messages::{MessagesRequestBody, TopK};
+
+let request_body = MessagesRequestBody {
+    model: ClaudeModel::Claude3Sonnet20240229,
+    max_tokens: MaxTokens::new(1024, model)?,
+    messages: vec![Message::user("Hello, Claude!")],
+    top_k: Some(TopK::new(40)?),
+    ..Default::default()
+};
+```
 
 ## License
 
-Licensed under either of the [Apache License, Version 2.0](./LICENSE-APACHE) or the [MIT](./LICENSE-MIT) license at your
-option.
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
