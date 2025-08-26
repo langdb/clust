@@ -18,6 +18,9 @@ pub enum ClaudeModel {
     // Claude 3.5 Sonnet
     /// Claude 3.5 Sonnet at 2024/06/20
     Claude35Sonnet20240620,
+    // Claude 3.5 Haiku
+    /// Claude 3.5 Haiku at 2024/10/22
+    Claude35Haiku20241022,
     // Claude 3.7 Sonnet
     /// Claude 3.7 Sonnet at 2024/06/20
     Claude37Sonnet20250219,
@@ -25,6 +28,10 @@ pub enum ClaudeModel {
     Claude4Opus20250514,
     // Claude 4.0 Sonnet
     Claude4Sonnet20250514,
+    // Claude 4.1 Opus
+    Claude41Opus20250805,
+    // Claude 4.1 Sonnet
+    Claude41Sonnet20250805,
 }
 
 impl Default for ClaudeModel {
@@ -51,6 +58,9 @@ impl Display for ClaudeModel {
             | ClaudeModel::Claude35Sonnet20240620 => {
                 write!(f, "claude-3-5-sonnet-20240620")
             },
+            | ClaudeModel::Claude35Haiku20241022 => {
+                write!(f, "claude-3-5-haiku-20241022")
+            },
             | ClaudeModel::Claude37Sonnet20250219 => {
                 write!(f, "claude-3-7-sonnet-20250219")
             },
@@ -59,6 +69,12 @@ impl Display for ClaudeModel {
             },
             | ClaudeModel::Claude4Sonnet20250514 => {
                 write!(f, "claude-sonnet-4-20250514")
+            },
+            | ClaudeModel::Claude41Opus20250805 => {
+                write!(f, "claude-opus-4-1-20250805")
+            },
+            | ClaudeModel::Claude41Sonnet20250805 => {
+                write!(f, "claude-sonnet-4-1-20250805")
             },
         }
     }
@@ -71,9 +87,12 @@ impl ClaudeModel {
             | ClaudeModel::Claude3Sonnet20240229 => 4096,
             | ClaudeModel::Claude3Haiku20240307 => 4096,
             | ClaudeModel::Claude35Sonnet20240620 => 4096,
+            | ClaudeModel::Claude35Haiku20241022 => 8192,
             | ClaudeModel::Claude37Sonnet20250219 => 64000,
             | ClaudeModel::Claude4Opus20250514 => 32000,
             | ClaudeModel::Claude4Sonnet20250514 => 64000,
+            | ClaudeModel::Claude41Opus20250805 => 32000,
+            | ClaudeModel::Claude41Sonnet20250805 => 32000,
         }
     }
 }
@@ -84,9 +103,12 @@ impl_enum_string_serialization!(
     Claude3Sonnet20240229 => "claude-3-sonnet-20240229",
     Claude3Haiku20240307 => "claude-3-haiku-20240307",
     Claude35Sonnet20240620 => "claude-3-5-sonnet-20240620",
+    Claude35Haiku20241022 => "claude-3-5-haiku-20241022",
     Claude37Sonnet20250219 => "claude-3-7-sonnet-20250219",
     Claude4Opus20250514 => "claude-opus-4-20250514",
-    Claude4Sonnet20250514 => "claude-sonnet-4-20250514"
+    Claude4Sonnet20250514 => "claude-sonnet-4-20250514",
+    Claude41Opus20250805 => "claude-opus-4-1-20250805",
+    Claude41Sonnet20250805 => "claude-sonnet-4-1-20250805"
 );
 
 #[cfg(test)]
