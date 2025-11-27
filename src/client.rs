@@ -276,7 +276,7 @@ impl ClientBuilder {
             .unwrap_or_default();
         let client = self
             .client
-            .unwrap_or_else(|| reqwest::Client::new());
+            .unwrap_or_default();
 
         Client {
             api_key: self.api_key,

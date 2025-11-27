@@ -123,7 +123,7 @@ pub(crate) async fn create_a_message_stream(
 ) -> Result<impl Stream<Item = Result<MessageChunk, StreamError>>, MessagesError>
 {
     // Validate stream option.
-    if let None = &request_body.stream {
+    if request_body.stream.is_none() {
         return Err(MessagesError::StreamOptionMismatch);
     }
     if let Some(stream) = &request_body.stream {

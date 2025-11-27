@@ -133,15 +133,15 @@ impl ToolResultContent {
         }
     }
 }
-impl Into<ToolResultContent> for String {
-    fn into(self) -> ToolResultContent {
-        ToolResultContent::Text(self)
+impl From<String> for ToolResultContent {
+    fn from(val: String) -> Self {
+        ToolResultContent::Text(val)
     }
 }
 
-impl Into<ToolResultContent> for &str {
-    fn into(self) -> ToolResultContent {
-        ToolResultContent::Text(self.to_string())
+impl From<&str> for ToolResultContent {
+    fn from(val: &str) -> Self {
+        ToolResultContent::Text(val.to_string())
     }
 }
 
@@ -228,7 +228,6 @@ impl ToolList {
             .iter()
             .map(|tool| tool.definition())
             .collect::<Vec<ToolDefinition>>()
-            .into()
     }
 
     /// Calls a tool in this list.
@@ -242,7 +241,7 @@ impl ToolList {
             .tools
             .iter()
             .find(|tool| tool.definition().name == target_name)
-            .ok_or_else(|| ToolCallError::ToolNotFound(target_name))?;
+            .ok_or(ToolCallError::ToolNotFound(target_name))?;
 
         target_tool.call(tool_use)
     }

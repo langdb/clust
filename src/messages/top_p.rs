@@ -46,7 +46,7 @@ impl TopP {
     /// ## Errors
     /// It returns a validation error if the value is not in range: `[0.0, 1.0]`.
     pub fn new(value: f32) -> Result<Self, ValidationError<f32>> {
-        if value < 0.0 || value > 1.0 {
+        if !(0.0..=1.0).contains(&value) {
             return Err(ValidationError {
                 _type: "TopP".to_string(),
                 expected: "The top_p must be in range: [0.0, 1.0].".to_string(),

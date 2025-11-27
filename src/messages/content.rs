@@ -518,6 +518,7 @@ impl_enum_string_serialization!(
 
 /// The image content source.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Default)]
 pub struct ImageContentSource {
     /// The source type.
     #[serde(rename = "type")]
@@ -528,15 +529,6 @@ pub struct ImageContentSource {
     pub data: String,
 }
 
-impl Default for ImageContentSource {
-    fn default() -> Self {
-        Self {
-            _type: ImageSourceType::default(),
-            media_type: ImageMediaType::default(),
-            data: String::new(),
-        }
-    }
-}
 
 impl_display_for_serialize!(ImageContentSource);
 

@@ -69,8 +69,7 @@ impl<'de> serde::Deserialize<'de> for CacheControlType {
         match s.as_str() {
             | "ephemeral" => Ok(CacheControlType::Ephemeral),
             | _ => Err(serde::de::Error::custom(format!(
-                "unknown cache control type: {}",
-                s
+                "unknown cache control type: {s}"
             ))),
         }
     }
@@ -125,8 +124,7 @@ impl<'de> serde::Deserialize<'de> for CacheTtl {
             | "5m" => Ok(CacheTtl::FiveMinutes),
             | "1h" => Ok(CacheTtl::OneHour),
             | _ => Err(serde::de::Error::custom(format!(
-                "unknown cache TTL: {}",
-                s
+                "unknown cache TTL: {s}"
             ))),
         }
     }

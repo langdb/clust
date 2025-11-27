@@ -28,13 +28,13 @@ impl Display for SystemPrompt {
         f: &mut std::fmt::Formatter<'_>,
     ) -> std::fmt::Result {
         match self {
-            | SystemPrompt::Simple(text) => write!(f, "{}", text),
+            | SystemPrompt::Simple(text) => write!(f, "{text}"),
             | SystemPrompt::Advanced(blocks) => {
                 for (i, block) in blocks.iter().enumerate() {
                     if i > 0 {
-                        write!(f, "\n")?;
+                        writeln!(f)?;
                     }
-                    write!(f, "{}", block)?;
+                    write!(f, "{block}")?;
                 }
                 Ok(())
             },

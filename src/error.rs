@@ -176,7 +176,7 @@ impl Display for ApiErrorType {
                 write!(f, "overloaded_error")
             },
             | ApiErrorType::Unknown(status) => {
-                write!(f, "unknown_error({})", status)
+                write!(f, "unknown_error({status})")
             },
         }
     }

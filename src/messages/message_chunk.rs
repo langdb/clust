@@ -13,7 +13,7 @@ use crate::messages::{
 use super::ToolUseContentBlock;
 
 /// The stream chunk of messages.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum MessageChunk {
     /// Message start chunk.
     MessageStart(MessageStartChunk),
@@ -134,8 +134,7 @@ impl MessageChunk {
         if lines.len() != 2 {
             return Err(StreamError::ParseChunkStringError(
                 format!(
-                    "Chunk must be two lines but not: {}",
-                    source
+                    "Chunk must be two lines but not: {source}"
                 ),
             ));
         }
@@ -146,8 +145,7 @@ impl MessageChunk {
             .strip_prefix("event: ")
             .ok_or_else(|| {
                 StreamError::ParseChunkStringError(format!(
-                    "First line must start with 'event: ', but not: {}",
-                    source
+                    "First line must start with 'event: ', but not: {source}"
                 ))
             })?;
         let chunk_type = MessageChunkType::from_str(event)
@@ -159,8 +157,7 @@ impl MessageChunk {
             .strip_prefix("data: ")
             .ok_or_else(|| {
                 StreamError::ParseChunkStringError(format!(
-                    "Second line must start with 'data: ', but not: {}",
-                    source
+                    "Second line must start with 'data: ', but not: {source}"
                 ))
             })?;
 
