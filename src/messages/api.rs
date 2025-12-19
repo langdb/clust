@@ -58,6 +58,7 @@ fn has_one_hour_ttl(request_body: &MessagesRequestBody) -> bool {
 pub(crate) async fn create_a_message(
     client: &Client,
     request_body: MessagesRequestBody,
+    endpoint: &str,
 ) -> Result<MessagesResponseBody, MessagesError> {
     // Validate stream option.
     if let Some(stream) = &request_body.stream {
@@ -67,7 +68,7 @@ pub(crate) async fn create_a_message(
     }
 
     // Check if we need to add the extended cache beta header
-    let mut request_builder = client.post("https://api.anthropic.com/v1/messages");
+    let mut request_builder = client.post(endpoint);
     
     if has_one_hour_ttl(&request_body) {
         request_builder = request_builder.header("anthropic-beta", Beta::ExtendedCacheTtl2025_04_11.to_string());
@@ -120,6 +121,7 @@ pub(crate) async fn create_a_message(
 pub(crate) async fn create_a_message_stream(
     client: &Client,
     request_body: MessagesRequestBody,
+    endpoint: &str,
 ) -> Result<impl Stream<Item = Result<MessageChunk, StreamError>>, MessagesError>
 {
     // Validate stream option.
@@ -132,8 +134,9 @@ pub(crate) async fn create_a_message_stream(
         }
     }
 
+    eprintln!("endpoint: {}", endpoint);
     // Check if we need to add the extended cache beta header
-    let mut request_builder = client.post("https://api.anthropic.com/v1/messages");
+    let mut request_builder = client.post(endpoint);
     
     if has_one_hour_ttl(&request_body) {
         request_builder = request_builder.header("anthropic-beta", Beta::ExtendedCacheTtl2025_04_11.to_string());

@@ -1,10 +1,10 @@
-use crate::macros::impl_enum_string_serialization;
+use crate::macros::impl_enum_string_serialization_with_other;
 use std::fmt::Display;
 
 /// The model that will complete your prompt.
 ///
 /// See [models](https://docs.anthropic.com/claude/docs/models-overview) for additional details and options.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ClaudeModel {
     // Claude 3 Opus
     /// Claude 3 Opus at 2024/02/29.
@@ -38,6 +38,7 @@ pub enum ClaudeModel {
     Claude45Haiku20251001,
     // Claude 4.5 Opus
     Claude45Opus20251101,
+    Other(String),
 }
 impl Default for ClaudeModel {
     fn default() -> Self {
@@ -90,6 +91,9 @@ impl Display for ClaudeModel {
             | ClaudeModel::Claude45Opus20251101 => {
                 write!(f, "claude-opus-4-5-20251101")
             },
+            | ClaudeModel::Other(name) => {
+                write!(f, "{name}")
+            },
         }
     }
 }
@@ -110,11 +114,24 @@ impl ClaudeModel {
             | ClaudeModel::Claude45Sonnet20250929 => 64000,
             | ClaudeModel::Claude45Haiku20251001 => 8192,
             | ClaudeModel::Claude45Opus20251101 => 64000,
+            | ClaudeModel::Other(_) => 0,
         }
     }
 }
 
-impl_enum_string_serialization!(
+impl From<String> for ClaudeModel {
+    fn from(value: String) -> Self {
+        Self::Other(value)
+    }
+}
+
+impl From<&str> for ClaudeModel {
+    fn from(value: &str) -> Self {
+        Self::Other(value.to_string())
+    }
+}
+
+impl_enum_string_serialization_with_other!(
     ClaudeModel,
     Claude3Opus20240229 => "claude-3-opus-20240229",
     Claude3Sonnet20240229 => "claude-3-sonnet-20240229",
@@ -128,7 +145,8 @@ impl_enum_string_serialization!(
     Claude41Sonnet20250805 => "claude-sonnet-4-1-20250805",
     Claude45Sonnet20250929 => "claude-sonnet-4-5-20250929",
     Claude45Haiku20251001 => "claude-haiku-4-5-20251001",
-    Claude45Opus20251101 => "claude-opus-4-5-20251101"
+    Claude45Opus20251101 => "claude-opus-4-5-20251101";
+    Other(String)
 );
 
 #[cfg(test)]

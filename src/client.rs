@@ -124,7 +124,7 @@ impl Client {
     ///     };
     ///
     ///     let response = client
-    ///         .create_a_message(request_body)
+    ///         .create_a_message(request_body, None)
     ///         .await?;
     ///
     ///     Ok(())
@@ -133,8 +133,10 @@ impl Client {
     pub async fn create_a_message(
         &self,
         request_body: MessagesRequestBody,
+        endpoint: Option<String>,
     ) -> Result<MessagesResponseBody, MessagesError> {
-        crate::messages::api::create_a_message(self, request_body).await
+        let endpoint = endpoint.unwrap_or("https://api.anthropic.com/v1/messages".to_string());
+        crate::messages::api::create_a_message(self, request_body, &endpoint).await
     }
 
     /// Create a Message with incrementally streaming the response using server-sent events (SSE).
@@ -189,11 +191,13 @@ impl Client {
     pub async fn create_a_message_stream(
         &self,
         request_body: MessagesRequestBody,
+        endpoint: Option<String>,
     ) -> Result<
         impl Stream<Item = Result<MessageChunk, StreamError>>,
         MessagesError,
     > {
-        crate::messages::api::create_a_message_stream(self, request_body).await
+        let endpoint = endpoint.unwrap_or("https://api.anthropic.com/v1/messages".to_string());
+        crate::messages::api::create_a_message_stream(self, request_body, &endpoint).await
     }
 }
 

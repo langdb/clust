@@ -56,6 +56,70 @@ macro_rules! impl_enum_string_serialization {
 
 pub(crate) use impl_enum_string_serialization;
 
+/// Implements [`serde::Serialize`] and [`serde::Deserialize`] for an enum with corresponding string variants,
+/// with optional support for an `Other(String)` variant to handle unknown values.
+///
+/// ## Arguments
+/// - `$enum_name`: The name of the enum.
+/// - `$($variant:ident => $str:expr),*`: The variants of the enum and their corresponding string representations.
+/// - `Other($other_type:ty)`: Optional. If provided, unknown strings will be deserialized into this variant.
+macro_rules! impl_enum_string_serialization_with_other {
+    ($enum_name:ident, $($variant:ident => $str:expr),*; Other($other_type:ty)) => {
+        impl serde::Serialize for $enum_name {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                match self {
+                    $(
+                        $enum_name::$variant => serializer.serialize_str($str),
+                    )*
+                    $enum_name::Other(ref other) => serializer.serialize_str(other),
+                }
+            }
+        }
+
+        impl<'de> serde::Deserialize<'de> for $enum_name {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct EnumVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for EnumVisitor {
+                    type Value = $enum_name;
+
+                    fn expecting(
+                        &self,
+                        formatter: &mut std::fmt::Formatter,
+                    ) -> std::fmt::Result {
+                        formatter.write_str(concat!("a string representing a ", stringify!($enum_name)))
+                    }
+
+                    fn visit_str<E>(self, value: &str) -> Result<$enum_name, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            $(
+                                $str => Ok($enum_name::$variant),
+                            )*
+                            _ => Ok($enum_name::Other(value.into())),
+                        }
+                    }
+                }
+
+                deserializer.deserialize_str(EnumVisitor)
+            }
+        }
+    };
+    ($enum_name:ident, $($variant:ident => $str:expr),*) => {
+        impl_enum_string_serialization!($enum_name, $($variant => $str),*);
+    };
+}
+
+pub(crate) use impl_enum_string_serialization_with_other;
+
 /// Implements [`serde::Serialize`], [`serde::Deserialize`] and [`From`]
 /// for an enum with corresponding struct variants by indicating the tag field.
 ///
