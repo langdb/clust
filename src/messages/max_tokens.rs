@@ -54,7 +54,7 @@ impl MaxTokens {
         value: u32,
         model: ClaudeModel,
     ) -> Result<MaxTokens, ValidationError<u32>> {
-        if value > model.max_tokens() {
+        if model.max_tokens() > 0 && value > model.max_tokens() {
             return Err(ValidationError {
                 _type: "MaxTokens".to_string(),
                 expected: format!(

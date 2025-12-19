@@ -141,7 +141,7 @@ impl MessagesRequestBuilder {
     pub fn new(model: ClaudeModel) -> Self {
         Self {
             request_body: MessagesRequestBody {
-                model,
+                model: model.clone(),
                 max_tokens: MaxTokens::from_model(model),
                 ..Default::default()
             },
@@ -162,7 +162,7 @@ impl MessagesRequestBuilder {
     ) -> Result<Self, ValidationError<u32>> {
         Ok(Self {
             request_body: MessagesRequestBody {
-                model,
+                model: model.clone(),
                 max_tokens: MaxTokens::new(max_tokens, model)?,
                 ..Default::default()
             },
