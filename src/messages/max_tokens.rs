@@ -72,9 +72,12 @@ impl MaxTokens {
     }
 
     /// Creates a new maximum number of tokens for the model.
+    /// For custom models (where max_tokens is unknown), defaults to 4096.
     pub fn from_model(model: ClaudeModel) -> Self {
+        let model_max = model.max_tokens();
         Self {
-            value: model.max_tokens(),
+            // Use 4096 as default for custom models (where max_tokens returns 0)
+            value: if model_max == 0 { 4096 } else { model_max },
         }
     }
 }
